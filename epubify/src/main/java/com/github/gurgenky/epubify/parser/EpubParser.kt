@@ -16,6 +16,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import net.lingala.zip4j.ZipFile
 import org.jsoup.Jsoup
+import org.jsoup.nodes.Document
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileNotFoundException
@@ -227,6 +228,7 @@ internal object EpubParser {
     private fun parseChapter(file: File): Chapter {
         val document = Jsoup.parse(file, "UTF-8")
 
+        document.outputSettings().syntax(Document.OutputSettings.Syntax.xml)
         val title = document.title()
         val content = document.body().html()
 

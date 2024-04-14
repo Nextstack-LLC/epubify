@@ -16,7 +16,7 @@ class ParserTest {
 
     @Test
     fun testParseEpub() = runTest {
-        val file = getFileFromPath(this@ParserTest, "test1.epub")
+        val file = getFileFromPath(this@ParserTest, "test2.epub")
 
         val epub = EpubParser.parse(file)
 
