@@ -5,6 +5,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.Preview
+import com.github.gurgenky.epubify.ui.EpubViewer
 import com.github.gurgenky.epubifydemo.ui.theme.EpubifyDemoTheme
 
 class MainActivity : ComponentActivity() {
@@ -12,7 +13,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             EpubifyDemoTheme {
-
+                EpubViewer()
             }
         }
     }
