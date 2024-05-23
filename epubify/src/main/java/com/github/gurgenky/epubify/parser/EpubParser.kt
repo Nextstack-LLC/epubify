@@ -10,6 +10,7 @@ import com.github.gurgenky.epubify.model.Metadata
 import com.github.gurgenky.epubify.model.Spine
 import com.github.gurgenky.epubify.model.XmlTag
 import com.github.gurgenky.epubify.model.XmlTree
+import com.github.gurgenky.epubify.utils.parseDocument
 import com.github.gurgenky.epubify.utils.selectTag
 import com.github.gurgenky.epubify.utils.toTempFile
 import kotlinx.coroutines.Dispatchers
@@ -210,31 +211,35 @@ internal object EpubParser {
         metadata: Metadata,
         orderedDocuments: List<File>
     ): Book {
+        var chapterIndex = 0
+
         val title = metadata.title
         val author = metadata.author
         val cover = metadata.cover
-        val chapters = orderedDocuments.map { parseChapter(it) }
+
+        val chapters = orderedDocuments.map {
+            val output = it.parseDocument()
+
+            val chapterTitle = output.title ?: if (chapterIndex == 0) "" else null
+            if (chapterTitle != null)
+                chapterIndex += 1
+
+            output to chapterTitle
+        }.groupBy {
+            it.second
+        }.map { (index, list) ->
+            Chapter(
+                title = list.first().first.title ?: "Chapter $index",
+                content = list.joinToString("\n\n") { it.first.content }
+            )
+        }.filter {
+            it.content.isNotEmpty()
+        }
 
         val images = parseImages(parent, manifest, orderedDocuments)
 
         return Book(title, author, cover, chapters, images)
     }
-
-    /**
-     * Parses a chapter from a file.
-     * @param file The file of the chapter.
-     * @return The parsed chapter.
-     */
-    private fun parseChapter(file: File): Chapter {
-        val document = Jsoup.parse(file, "UTF-8")
-
-        document.outputSettings().syntax(Document.OutputSettings.Syntax.xml)
-        val title = document.title()
-        val content = document.body().html()
-
-        return Chapter(title, content)
-    }
-
 
     /**
      * Parses images from an EPUB file.
