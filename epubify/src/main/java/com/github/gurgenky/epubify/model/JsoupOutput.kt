@@ -10,3 +10,5 @@ internal data class JsoupOutput(
     val title: String?,
     val content: String
 )
+
+internal typealias TempChapter = JsoupOutput

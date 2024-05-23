@@ -1,10 +1,12 @@
 package com.github.gurgenky.epubify.ui
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.util.AttributeSet
 import android.view.GestureDetector
 import android.view.MotionEvent
 import android.webkit.JavascriptInterface
+import android.webkit.WebSettings
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import com.github.gurgenky.epubify.utils.SwipeGestureListener
@@ -15,7 +17,8 @@ import com.github.gurgenky.epubify.utils.toPx
 /**
  * A WebView that displays an epub file.
  */
-class EpubWebView @JvmOverloads constructor(
+@SuppressLint("SetJavaScriptEnabled")
+internal class EpubWebView @JvmOverloads constructor(
     context: Context,
     attrs: AttributeSet? = null,
     defStyleAttr: Int = 0
@@ -23,8 +26,6 @@ class EpubWebView @JvmOverloads constructor(
 
     private var currentPage = 0
     private var totalPages = 0
-
-    private var touchDownY = 0f
 
     private val webViewResizer = WebViewResizer()
 
@@ -45,6 +46,9 @@ class EpubWebView @JvmOverloads constructor(
 
     init {
         settings.javaScriptEnabled = true
+        settings.useWideViewPort = true
+        settings.loadWithOverviewMode = true
+
         webViewClient = EpubWebViewClient()
         addJavascriptInterface(webViewResizer, "WebViewResizer")
         initTouchListeners()
@@ -53,22 +57,9 @@ class EpubWebView @JvmOverloads constructor(
     /**
      * Initializes the touch listeners for the WebView.
      */
+    @SuppressLint("ClickableViewAccessibility")
     private fun initTouchListeners() {
         setOnTouchListener { _, motionEvent ->
-            // multitouch is ignored
-            if (motionEvent.pointerCount > 1) {
-                return@setOnTouchListener true
-            }
-
-            when (motionEvent.action) {
-                MotionEvent.ACTION_DOWN -> touchDownY = motionEvent.y
-                MotionEvent.ACTION_MOVE, MotionEvent.ACTION_CANCEL, MotionEvent.ACTION_UP ->
-                    motionEvent.setLocation(
-                        motionEvent.x,
-                        touchDownY
-                    )
-            }
-
             gestureDetector.onTouchEvent(motionEvent)
         }
     }
@@ -86,7 +77,9 @@ class EpubWebView @JvmOverloads constructor(
     private inner class EpubWebViewClient : WebViewClient() {
 
         override fun onPageFinished(view: WebView, url: String?) {
-            view.loadUrl("javascript:(function(){ document.body.style.margin=\"6%\"})();")
+            view.loadUrl("javascript:(function(){ document.body.style.marginTop=\"6%\"})();")
+            view.loadUrl("javascript:(function(){ document.body.style.marginLeft=\"6%\"})();")
+            view.loadUrl("javascript:(function(){ document.body.style.marginRight=\"6%\"})();")
             view.loadUrl("javascript:window.WebViewResizer.processHeight(document.querySelector('body').offsetHeight);")
         }
     }
