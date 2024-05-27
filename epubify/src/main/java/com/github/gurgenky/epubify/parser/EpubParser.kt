@@ -257,6 +257,7 @@ internal object EpubParser {
             parseChaptersUsingToc(
                 parent,
                 toc,
+                orderedFiles,
                 manifest,
                 images
             )
@@ -276,6 +277,7 @@ internal object EpubParser {
      * Parses the chapters of an EPUB file using the TOC.
      * @param parent The parent file of the EPUB file.
      * @param toc The parsed TOC.
+     * @param orderedFiles The ordered files of the EPUB file.
      * @param images The parsed images.
      * @param manifest The parsed manifest.
      * @return The parsed chapters.
@@ -283,10 +285,17 @@ internal object EpubParser {
     private fun parseChaptersUsingToc(
         parent: File,
         toc: Toc,
+        orderedFiles: List<File>,
         manifest: Manifest,
         images: List<Image>
     ): List<TempChapter> {
-        return toc.entries.map { entry ->
+        val filesBeforeToc = orderedFiles.takeWhile { file ->
+            val item = manifest.items.find { item -> item.href == file.name }
+            val tocItem = toc.entries.find { entry -> entry.href == item?.href }
+            tocItem == null
+        }
+
+        return parseChaptersWithSpine(filesBeforeToc, images) + toc.entries.map { entry ->
             val content = if (entry.children.isNotEmpty()) {
                 val outputs = entry.children.map {
                     val tocItemPath = it.href.split("#").first()

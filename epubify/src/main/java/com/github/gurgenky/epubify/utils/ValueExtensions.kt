@@ -1,39 +1,42 @@
 package com.github.gurgenky.epubify.utils
 
+import android.content.Context
+import android.content.res.Resources
+import com.github.gurgenky.epubify.R
 import com.github.gurgenky.epubify.model.Book
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
-private const val HTML_TEMPLATE = """
-    <!DOCTYPE html>
-    <html>
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content='width=device-width, initial-scale=1.0,text/html,charset=utf-8' >
-        <title>%s</title>
-        <style>
-            img {
-                max-width: calc(100%%);"
-            }
-            pre {
-              line-height: 1;
-              resize: both;
-              overflow: auto;
-              white-space: pre-wrap;
-            }
-        </style>
-    </head>
-    <body>
-            %s
-    </body>
-    </html>
-"""
+/**
+ * The template for a chapter in the HTML representation of a book.
+ */
+private val chapterTemplate = """
+    <div class="chapter">
+        %s
+    </div>
+""".trimIndent()
 
 /**
  * Extension function to convert a [Book] to an HTML string.
  *
  * @return The HTML representation of the book.
  */
-internal val Book.asHtml: String
-    get() {
-        val body = chapters.joinToString("\n") { it.content }
-        return HTML_TEMPLATE.format(title, body)
+internal suspend fun Book.asHtml(
+    context: Context
+): String {
+        val htmlTemplate = withContext(Dispatchers.IO) {
+            context.resources.readRawResource(R.raw.epub_template)
+        }
+
+        val body = chapters.joinToString("\n") {
+            chapterTemplate.format(it.content)
+        }
+        return htmlTemplate.format(title, body)
     }
+
+/**
+ * Reads a raw resource file and returns its content as a string.
+ */
+internal fun Resources.readRawResource(resourceId: Int): String {
+    return openRawResource(resourceId).bufferedReader().use { it.readText() }
+}
