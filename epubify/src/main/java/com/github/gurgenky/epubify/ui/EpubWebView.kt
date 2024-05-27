@@ -25,24 +25,29 @@ internal class EpubWebView @JvmOverloads constructor(
 ) : WebView(context, attrs, defStyleAttr) {
 
     /**
-     * OnInit callback for the WebView that returns the total number of pages in the epub file.
+     * onPagesInitialized callback for the WebView that is called when the pages are initialized.
      */
-    internal var onInit: ((totalPages: Int) -> Unit)? = null
+    internal var onPagesInitialized: ((totalPages: Int) -> Unit)? = null
 
     /**
-     * OnPageChanged callback for the WebView.
+     * onPageChanged callback for the WebView.
      */
     internal var onPageChanged: ((currentPage: Int, totalPages: Int) -> Unit)? = null
 
     /**
-     * OnSingleTap callback for the WebView.
+     * onSingleTap callback for the WebView.
      */
     internal var onTap: (() -> Unit)? = null
 
     /**
-     * OnError callback for the WebView that is called when an error occurs.
+     * onError callback for the WebView that is called when an error occurs.
      */
     internal var onError: (() -> Unit)? = null
+
+    /**
+     * onLoadingFinished callback for the WebView that is called when the loading is finished.
+     */
+    internal var onLoadingFinished: (() -> Unit)? = null
 
     /**
      * The current page number.
@@ -110,6 +115,13 @@ internal class EpubWebView @JvmOverloads constructor(
     }
 
     /**
+     * Loads the specified epub page in the WebView.
+     */
+    internal fun loadPage(page: Int) {
+        webViewResizer.loadPage(page)
+    }
+
+    /**
      * Initializes the touch listeners for the WebView.
      */
     @SuppressLint("ClickableViewAccessibility")
@@ -120,13 +132,6 @@ internal class EpubWebView @JvmOverloads constructor(
     }
 
     /**
-     * Loads the specified epub page in the WebView.
-     */
-    private fun loadPage(page: Int) {
-        webViewResizer.loadPage(page)
-    }
-
-    /**
      * A WebViewClient that calculates the total number of pages in the epub file.
      */
     private inner class EpubWebViewClient : WebViewClient() {
@@ -134,7 +139,7 @@ internal class EpubWebView @JvmOverloads constructor(
         override fun onPageFinished(view: WebView, url: String?) {
             view.loadUrl("javascript:window.WebViewResizer.processPages();")
             if (totalPages > 0) {
-                onInit?.invoke(totalPages)
+                onLoadingFinished?.invoke()
             }
         }
 
@@ -163,6 +168,9 @@ internal class EpubWebView @JvmOverloads constructor(
         fun processPages() {
             initChapterColumns { pages ->
                 totalPages = pages
+                if (pages > 0) {
+                    onPagesInitialized?.invoke(pages)
+                }
             }
         }
 
@@ -186,7 +194,7 @@ internal class EpubWebView @JvmOverloads constructor(
 
             post {
                 evaluateJavascript(chapterPaddingScript) {
-                    onComplete?.invoke(it.toIntOrNull() ?: 1)
+                    onComplete?.invoke(it.toIntOrNull() ?: 0)
                 }
             }
         }

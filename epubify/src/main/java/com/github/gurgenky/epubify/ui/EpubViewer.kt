@@ -18,7 +18,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalInspectionMode
@@ -40,6 +39,7 @@ import java.io.InputStream
  *
  * @param epubPath Path to the epub file
  * @param modifier Modifier
+ * @param state EpubViewerState for controlling the viewer
  * @param loading Composable function for loading state
  * @param error Composable function for error state
  * @param onInitialized Callback for when the epub file is initialized
@@ -50,6 +50,7 @@ import java.io.InputStream
 fun EpubViewer(
     epubPath: String,
     modifier: Modifier = Modifier,
+    state: EpubViewerState = rememberEpubViewerState(),
     loading: @Composable BoxScope.() -> Unit = {},
     error: @Composable BoxScope.() -> Unit = {},
     onInitialized: ((Int) -> Unit)? = null,
@@ -67,6 +68,7 @@ fun EpubViewer(
 
     ViewerContent(
         modifier = modifier,
+        state = state,
         book = book,
         loading = loading,
         onInitialized = onInitialized,
@@ -93,6 +95,7 @@ fun EpubViewer(
  *
  * @param epub File of the epub
  * @param modifier Modifier
+ * @param state EpubViewerState for controlling the viewer
  * @param loading Composable function for loading state
  * @param error Composable function for error state
  * @param onInitialized Callback for when the epub file is initialized
@@ -103,6 +106,7 @@ fun EpubViewer(
 fun EpubViewer(
     epub: File,
     modifier: Modifier = Modifier,
+    state: EpubViewerState = rememberEpubViewerState(),
     loading: @Composable BoxScope.() -> Unit = {},
     error: @Composable BoxScope.() -> Unit = {},
     onInitialized: ((Int) -> Unit)? = null,
@@ -120,6 +124,7 @@ fun EpubViewer(
 
     ViewerContent(
         modifier = modifier,
+        state = state,
         book = book,
         loading = loading,
         onInitialized = onInitialized,
@@ -147,6 +152,7 @@ fun EpubViewer(
  *
  * @param epubInputStream InputStream of the epub file
  * @param modifier Modifier
+ * @param state EpubViewerState for controlling the viewer
  * @param loading Composable function for loading state
  * @param error Composable function for error state
  * @param onInitialized Callback for when the epub file is initialized
@@ -160,6 +166,7 @@ fun EpubViewer(
 fun EpubViewer(
     epubInputStream: InputStream,
     modifier: Modifier = Modifier,
+    state: EpubViewerState = rememberEpubViewerState(),
     loading: @Composable BoxScope.() -> Unit = {},
     error: @Composable BoxScope.() -> Unit = {},
     onInitialized: ((Int) -> Unit)? = null,
@@ -177,6 +184,7 @@ fun EpubViewer(
 
     ViewerContent(
         modifier = modifier,
+        state = state,
         book = book,
         loading = loading,
         onInitialized = onInitialized,
@@ -205,6 +213,7 @@ fun EpubViewer(
 @Composable
 private fun ViewerContent(
     book: Book?,
+    state: EpubViewerState,
     modifier: Modifier = Modifier,
     loading: @Composable BoxScope.() -> Unit,
     error: @Composable BoxScope.() -> Unit,
@@ -215,6 +224,10 @@ private fun ViewerContent(
 ) {
     val context = LocalContext.current
     val isPreview = LocalInspectionMode.current
+
+    val epubViewer = remember {
+        EpubWebView(context)
+    }
 
     var isLoaded by remember {
         mutableStateOf(false)
@@ -257,13 +270,19 @@ private fun ViewerContent(
                 modifier = Modifier
                     .then(transparencyModifier),
                 factory = { _ ->
-                    val view = EpubWebView(context).apply {
+                    epubViewer.apply {
                         // Set callbacks
-                        onInit = {
+                        onLoadingFinished = {
                             isLoaded = true
+                        }
+                        onPagesInitialized = {
+                            state.setTotalPages(it)
                             onInitialized?.invoke(it)
                         }
-                        onPageChanged = onBookPageChanged
+                        onPageChanged = { currentPage, totalPages ->
+                            onBookPageChanged?.invoke(currentPage, totalPages)
+                            state.setCurrentPage(currentPage)
+                        }
                         onTap = onSingleTap
                         onError = {
                             isError = true
@@ -276,7 +295,7 @@ private fun ViewerContent(
                             ViewGroup.LayoutParams.MATCH_PARENT
                         )
                     }
-                    view
+                    epubViewer
                 },
                 update = { webView ->
                     webView.loadEpubHtml(htmlContent)
@@ -304,6 +323,13 @@ private fun ViewerContent(
             ) {
                 error()
             }
+        }
+    }
+
+    LaunchedEffect(state.pendingJumpPageIndex) {
+        if (state.pendingJumpPageIndex != -1) {
+            epubViewer.loadPage(state.pendingJumpPageIndex)
+            state.clearPendingJump()
         }
     }
 
