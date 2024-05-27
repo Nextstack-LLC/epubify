@@ -5,13 +5,17 @@ import android.view.MotionEvent
 import kotlin.math.abs
 
 /**
- * A gesture listener that detects swipe gestures.
+ * A gesture listener that detects swipe gestures and single taps.
  */
-class SwipeGestureListener(
+internal class ViewerGestureListener(
     private val onSwipeLeft: () -> Unit = {},
-    private val onSwipeRight: () -> Unit = {}
+    private val onSwipeRight: () -> Unit = {},
+    private val onTap: () -> Unit = {}
 ) : GestureDetector.SimpleOnGestureListener() {
 
+    /**
+     * Empty implementation to override the default behavior.
+     */
     override fun onScroll(
         e1: MotionEvent?,
         e2: MotionEvent,
@@ -21,6 +25,17 @@ class SwipeGestureListener(
         return true
     }
 
+    /**
+     * Detects a single tap gesture.
+     */
+    override fun onSingleTapConfirmed(e: MotionEvent): Boolean {
+        onTap()
+        return super.onSingleTapConfirmed(e)
+    }
+
+    /**
+     * Empty implementation to override the default behavior.
+     */
     override fun onDown(e: MotionEvent): Boolean {
         return true
     }

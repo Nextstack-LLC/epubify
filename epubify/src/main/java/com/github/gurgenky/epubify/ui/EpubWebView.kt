@@ -5,10 +5,12 @@ import android.content.Context
 import android.util.AttributeSet
 import android.view.GestureDetector
 import android.webkit.JavascriptInterface
+import android.webkit.WebResourceError
+import android.webkit.WebResourceRequest
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import com.github.gurgenky.epubify.R
-import com.github.gurgenky.epubify.utils.SwipeGestureListener
+import com.github.gurgenky.epubify.utils.ViewerGestureListener
 import com.github.gurgenky.epubify.utils.readRawResource
 
 
@@ -21,6 +23,26 @@ internal class EpubWebView @JvmOverloads constructor(
     attrs: AttributeSet? = null,
     defStyleAttr: Int = 0
 ) : WebView(context, attrs, defStyleAttr) {
+
+    /**
+     * OnInit callback for the WebView that returns the total number of pages in the epub file.
+     */
+    internal var onInit: ((totalPages: Int) -> Unit)? = null
+
+    /**
+     * OnPageChanged callback for the WebView.
+     */
+    internal var onPageChanged: ((currentPage: Int, totalPages: Int) -> Unit)? = null
+
+    /**
+     * OnSingleTap callback for the WebView.
+     */
+    internal var onTap: (() -> Unit)? = null
+
+    /**
+     * OnError callback for the WebView that is called when an error occurs.
+     */
+    internal var onError: (() -> Unit)? = null
 
     /**
      * The current page number.
@@ -40,7 +62,7 @@ internal class EpubWebView @JvmOverloads constructor(
     /**
      * A gesture detector for swipe gestures.
      */
-    private val gestureDetector = GestureDetector(context, SwipeGestureListener(
+    private val gestureDetector = GestureDetector(context, ViewerGestureListener(
         onSwipeLeft = {
             val page = currentPage - 1
             if (page >= 0) {
@@ -52,6 +74,9 @@ internal class EpubWebView @JvmOverloads constructor(
             if (page <= totalPages) {
                 loadPage(page)
             }
+        },
+        onTap = {
+            onTap?.invoke()
         }
     ))
 
@@ -108,6 +133,20 @@ internal class EpubWebView @JvmOverloads constructor(
 
         override fun onPageFinished(view: WebView, url: String?) {
             view.loadUrl("javascript:window.WebViewResizer.processPages();")
+            if (totalPages > 0) {
+                onInit?.invoke(totalPages)
+            }
+        }
+
+        override fun onReceivedError(
+            view: WebView?,
+            request: WebResourceRequest?,
+            error: WebResourceError?
+        ) {
+            super.onReceivedError(view, request, error)
+            if (error != null) {
+                onError?.invoke()
+            }
         }
     }
 
@@ -132,8 +171,10 @@ internal class EpubWebView @JvmOverloads constructor(
          */
         fun loadPage(page: Int) {
             post {
-                currentPage = page
-                evaluateJavascript("javascript:window.scrollTo((window.innerWidth / 4) * $page, 0);", null)
+                evaluateJavascript("javascript:window.scrollTo((window.innerWidth / 4) * $page, 0);") {
+                    currentPage = page
+                    onPageChanged?.invoke(page, totalPages)
+                }
             }
         }
 
