@@ -16,10 +16,12 @@ internal data class Manifest(
      * @property id The ID of the item.
      * @property href The path to the item.
      * @property mediaType The media type of the item.
+     * @property properties The properties of the item.
      */
     internal data class Item(
         val id: String,
         val href: String,
-        val mediaType: String
+        val mediaType: String,
+        val properties: String? = null
     )
 }

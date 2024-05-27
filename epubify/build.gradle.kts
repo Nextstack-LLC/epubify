@@ -69,6 +69,7 @@ dependencies {
     implementation(libs.jsoup)
     implementation(libs.xmlpull)
     implementation(libs.zipf4j)
+    implementation(libs.apache.commons.text)
 
     testImplementation(libs.junit)
     testImplementation(libs.robolectric)

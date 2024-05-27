@@ -14,7 +14,7 @@ internal data class Spine(
      *
      * @property idref The ID reference of the itemref.
      */
-    data class Itemref(
+    internal data class Itemref(
         val idref: String
     )
 }
