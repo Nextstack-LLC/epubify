@@ -6,6 +6,7 @@ import com.github.gurgenky.epubify.model.Image
 import com.github.gurgenky.epubify.model.JsoupOutput
 import com.github.gurgenky.epubify.model.XmlTag
 import com.github.gurgenky.epubify.parser.EpubWhitelist
+import org.apache.commons.text.StringEscapeUtils
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Element
 import org.jsoup.nodes.Node
@@ -59,10 +60,10 @@ internal fun File.parseDocument(
 
     val bodyElement: Element? = document.body()
     val titleElement: Element? = document.selectFirst("h1, h2, h3, h4, h5, h6")
-    val title: String = titleElement?.html() ?: ""
+    val title: String = StringEscapeUtils.unescapeHtml4(titleElement?.html()) ?: ""
 
     bodyContent = bodyElement?.let { modifyImageEntries(it, parsedImages).html() } ?: ""
-    bodyContent = Jsoup.clean(bodyContent, EpubWhitelist)
+    bodyContent = StringEscapeUtils.unescapeHtml4(Jsoup.clean(bodyContent, EpubWhitelist))
 
     return JsoupOutput(title, bodyContent)
 }

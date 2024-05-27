@@ -16,6 +16,7 @@ xmlpull = "1.1.3.4d_b4_min"
 coroutinesTest = "1.8.1-Beta"
 mockk = "1.13.10"
 robolectric = "4.12"
+apacheCommonsTextVersion = "1.11.0"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -37,6 +38,7 @@ material = { group = "com.google.android.material", name = "material", version.r
 
 zipf4j = { group = "net.lingala.zip4j", name = "zip4j", version.ref = "zip4j" }
 jsoup = { group = "org.jsoup", name = "jsoup", version.ref = "jsoup" }
+apache-commons-text = { group = 'org.apache.commons', name = 'commons-text', version.ref="apacheCommonsTextVersion"}
 xmlpull = { group = "xmlpull", name = "xmlpull", version.ref = "xmlpull" }
 kotlinx-coroutines-test =  { group = 'org.jetbrains.kotlinx', name = 'kotlinx-coroutines-test', version.ref = 'coroutinesTest' }
 mockk =  { group = 'io.mockk', name = 'mockk', version.ref = 'mockk' }
