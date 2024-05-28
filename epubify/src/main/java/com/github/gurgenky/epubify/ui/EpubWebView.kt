@@ -1,5 +1,6 @@
 package com.github.gurgenky.epubify.ui
 
+import android.animation.ObjectAnimator
 import android.annotation.SuppressLint
 import android.content.Context
 import android.util.AttributeSet
@@ -12,7 +13,7 @@ import android.webkit.WebViewClient
 import com.github.gurgenky.epubify.R
 import com.github.gurgenky.epubify.utils.ViewerGestureListener
 import com.github.gurgenky.epubify.utils.readRawResource
-
+import kotlin.math.roundToInt
 
 /**
  * A WebView that displays an epub file.
@@ -60,9 +61,9 @@ internal class EpubWebView @JvmOverloads constructor(
     private var totalPages = 0
 
     /**
-     * A WebViewResizer instance for resizing the WebView.
+     * A WebViewBridge for the WebView.
      */
-    private val webViewResizer = WebViewResizer()
+    private val bridge = WebViewBridge()
 
     /**
      * A gesture detector for swipe gestures.
@@ -76,7 +77,7 @@ internal class EpubWebView @JvmOverloads constructor(
         },
         onSwipeRight = {
             val page = currentPage + 1
-            if (page <= totalPages) {
+            if (page < totalPages) {
                 loadPage(page)
             }
         },
@@ -95,7 +96,7 @@ internal class EpubWebView @JvmOverloads constructor(
         settings.loadWithOverviewMode = true
 
         webViewClient = EpubWebViewClient()
-        addJavascriptInterface(webViewResizer, "WebViewResizer")
+        addJavascriptInterface(bridge, "WebViewBridge")
         initTouchListeners()
     }
 
@@ -118,7 +119,7 @@ internal class EpubWebView @JvmOverloads constructor(
      * Loads the specified epub page in the WebView.
      */
     internal fun loadPage(page: Int) {
-        webViewResizer.loadPage(page)
+        bridge.loadPage(page)
     }
 
     /**
@@ -136,13 +137,19 @@ internal class EpubWebView @JvmOverloads constructor(
      */
     private inner class EpubWebViewClient : WebViewClient() {
 
+        /**
+         * onPageFinished callback for the WebView that is called when the page is finished loading.
+         */
         override fun onPageFinished(view: WebView, url: String?) {
-            view.loadUrl("javascript:window.WebViewResizer.processPages();")
+            view.loadUrl("javascript:window.WebViewBridge.processPages();")
             if (totalPages > 0) {
                 onLoadingFinished?.invoke()
             }
         }
 
+        /**
+         * onReceivedError callback for the WebView that is called when an error occurs.
+         */
         override fun onReceivedError(
             view: WebView?,
             request: WebResourceRequest?,
@@ -156,9 +163,9 @@ internal class EpubWebView @JvmOverloads constructor(
     }
 
     /**
-     * A JavaScript interface that resizes the WebView.
+     * A JavaScript interface that provides methods for the WebView.
      */
-    private inner class WebViewResizer {
+    private inner class WebViewBridge {
 
         /**
          * Processes the pages in the WebView.
@@ -170,20 +177,32 @@ internal class EpubWebView @JvmOverloads constructor(
                 totalPages = pages
                 if (pages > 0) {
                     onPagesInitialized?.invoke(pages)
+                    loadPage(0)
                 }
             }
         }
 
         /**
-         * Loads the specified page in the WebView.
+         * Changes the page in the WebView.
+         * Calls the onPageChanged callback with the specified page number.
          */
         fun loadPage(page: Int) {
             post {
-                evaluateJavascript("javascript:window.scrollTo((window.innerWidth / 4) * $page, 0);") {
-                    currentPage = page
-                    onPageChanged?.invoke(page, totalPages)
-                }
+                evaluateJavascript("scrollToPage(${page});", null)
+                currentPage = page
+                onPageChanged?.invoke(page, totalPages)
             }
+        }
+
+        /**
+         * Scrolls to the specified position in the WebView.
+         */
+        @JavascriptInterface
+        @Suppress("unused")
+        fun animateScrollToPosition(pixelRatio: Double, position: Int) {
+            val positionInPixels = (position * pixelRatio).roundToInt()
+            val anim = ObjectAnimator.ofInt(this@EpubWebView, "scrollX", scrollX, positionInPixels)
+            anim.setDuration(500).start()
         }
 
         /**

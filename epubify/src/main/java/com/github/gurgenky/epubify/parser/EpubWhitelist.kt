@@ -19,6 +19,12 @@ internal object EpubWhitelist : Safelist() {
             "sub", "sup", "table", "tbody", "td", "tfoot", "th", "thead", "tr", "u",
             "ul"
         )
+        addAttributes("h1", "id")
+        addAttributes("h2", "id")
+        addAttributes("h3", "id")
+        addAttributes("h4", "id")
+        addAttributes("h5", "id")
+        addAttributes("h6", "id")
         addAttributes("a", "href", "title")
         addAttributes("blockquote", "cite")
         addAttributes("col", "span", "width")
@@ -30,7 +36,7 @@ internal object EpubWhitelist : Safelist() {
         addAttributes("td", "abbr", "axis", "colspan", "rowspan", "width")
         addAttributes("th", "abbr", "axis", "colspan", "rowspan", "scope", "width")
         addAttributes("ul", "type")
-        addProtocols("a", "href", "ftp", "http", "https", "mailto")
+        addProtocols("a", "href", "ftp", "http", "https", "mailto", "tel", "#")
         addProtocols("blockquote", "cite", "http", "https")
         addProtocols("cite", "cite", "http", "https")
         addProtocols("img", "src", "http", "https")
@@ -38,7 +44,32 @@ internal object EpubWhitelist : Safelist() {
     }
 
     override fun isSafeAttribute(tagName: String, el: Element, attr: Attribute): Boolean {
-        return ("img" == tagName && "src" == attr.key && base64ImageRegex.matches(attr.value))
-                || super.isSafeAttribute(tagName, el, attr)
+        return when {
+            tagName == "img" && "src" == attr.key -> {
+                base64ImageRegex.matches(attr.value)
+            }
+            tagName == "a" && "href" == attr.key -> {
+                isSafeHref(tagName, el, attr)
+            }
+            else -> super.isSafeAttribute(tagName, el, attr)
+        }
+    }
+
+    /**
+     * Checks if the href attribute is safe and modifies it if necessary.
+     * @param tagName The tag name.
+     * @param el The element.
+     * @param attr The attribute.
+     * @return Whether the href attribute is safe.
+     */
+    private fun isSafeHref(tagName: String, el: Element, attr: Attribute): Boolean {
+        val href = attr.value
+        val isChapterHref = href.contains(".xhtml") || href.contains(".html") || href.contains(".htm")
+        if (isChapterHref) {
+            val tagHref = href.split("#").getOrNull(1).orEmpty()
+            attr.setValue("#$tagHref")
+            return true
+        }
+        return super.isSafeAttribute(tagName, el, attr)
     }
 }

@@ -22,12 +22,12 @@ import kotlin.io.encoding.ExperimentalEncodingApi
 /**
  * Selects a tag with the given name from the list of child tags.
  * @param name The name of the tag to select.
- * @param recursive Whether to search recursively.
+ * @param searchInChildren Whether to search in the children of the child tags.
  * @return The selected tag, or null if no tag with the given name was found.
  */
-internal fun XmlTag.selectTag(name: String, recursive: Boolean = false): XmlTag? {
-    return childTags.find { it.name == name } ?: if (recursive) {
-        childTags.find { it.selectTag(name, true) != null }
+internal fun XmlTag.selectTag(name: String, searchInChildren: Boolean = false): XmlTag? {
+    return childTags.find { it.name == name } ?: if (searchInChildren) {
+        childTags.firstNotNullOfOrNull { it.selectTag(name, true) }
     } else {
         null
     }
@@ -63,7 +63,7 @@ internal fun File.parseDocument(
     val title: String = StringEscapeUtils.unescapeHtml4(titleElement?.html()) ?: ""
 
     bodyContent = bodyElement?.let { modifyImageEntries(it, parsedImages).html() } ?: ""
-    bodyContent = StringEscapeUtils.unescapeHtml4(Jsoup.clean(bodyContent, EpubWhitelist))
+    bodyContent = Jsoup.clean(bodyContent, EpubWhitelist)
 
     return JsoupOutput(title, bodyContent)
 }

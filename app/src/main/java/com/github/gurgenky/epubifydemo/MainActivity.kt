@@ -56,7 +56,7 @@ private fun Content() {
                     Text(text = "Previous")
                 }
                 Button(
-                    enabled = state.currentPageIndex < state.totalPages,
+                    enabled = state.currentPageIndex < state.totalPages - 1,
                     onClick = {
                         state.jumpTo(
                             state.currentPageIndex + 1
@@ -78,7 +78,8 @@ private fun Content() {
     ) {
         EpubViewer(
             state = state,
-            modifier = Modifier.padding(it),
+            modifier = Modifier
+                .padding(it),
             epubInputStream = epub,
             loading = {
                 CircularProgressIndicator()

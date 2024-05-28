@@ -297,7 +297,10 @@ internal object EpubParser {
 
         return parseChaptersWithSpine(filesBeforeToc, images) + toc.entries.map { entry ->
             val content = if (entry.children.isNotEmpty()) {
-                val outputs = entry.children.map {
+                val outputs = entry.children.distinctBy {
+                    val tocItemPath = it.href.split("#").first()
+                    tocItemPath
+                }.map {
                     val tocItemPath = it.href.split("#").first()
                     val item = manifest.items.find { item -> item.href == tocItemPath }
                     val file = File(parent.absolutePath + "/" + item?.href)
@@ -305,7 +308,8 @@ internal object EpubParser {
                 }
                 TempChapter(entry.title, outputs.joinToString("\n\n") { it.content })
             } else {
-                val item = manifest.items.find { item -> item.href == entry.href }
+                val tocItemPath = entry.href.split("#").first()
+                val item = manifest.items.find { item -> item.href == tocItemPath }
                 val file = File(parent.absolutePath + "/" + item?.href)
                 file.parseDocument(images)
             }
