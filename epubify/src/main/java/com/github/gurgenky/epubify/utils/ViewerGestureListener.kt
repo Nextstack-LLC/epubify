@@ -34,10 +34,21 @@ internal class ViewerGestureListener(
     }
 
     /**
-     * Empty implementation to override the default behavior.
+     * Detects a down gesture.
      */
     override fun onDown(e: MotionEvent): Boolean {
-        return true
+        return when (e.action) {
+            MotionEvent.ACTION_SCROLL -> {
+                true
+            }
+
+            MotionEvent.ACTION_MOVE -> {
+                true
+            }
+            else -> {
+                false
+            }
+        }
     }
 
     /**
@@ -61,10 +72,10 @@ internal class ViewerGestureListener(
                 }
                 true
             } else {
-                false
+                true
             }
         } else {
-            false
+            true
         }
     }
 

@@ -35,6 +35,17 @@ function initColumns() {
     return pageCount;
 }
 
+// Scroll to the element with the given id
+function scrollToElement(elementId) {
+    var element = document.getElementById(elementId);
+    var offset = element.offsetLeft;
+    var page = Math.floor(offset / columnWidth);
+
+    window.WebViewBridge.setCurrentPage(page);
+    scrollToPage(page);
+}
+
+// Scroll to the given page
 function scrollToPage(page) {
     var position = page * (columnWidth);
     window.WebViewBridge.animateScrollToPosition(window.devicePixelRatio, position);

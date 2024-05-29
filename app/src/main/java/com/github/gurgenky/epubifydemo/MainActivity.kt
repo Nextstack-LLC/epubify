@@ -39,7 +39,7 @@ class MainActivity : ComponentActivity() {
 @Composable
 private fun Content() {
     val resources = LocalContext.current.resources
-    val epub = resources.openRawResource(R.raw.test2)
+    val epub = resources.openRawResource(R.raw.epub1)
     val state = rememberEpubViewerState()
 
     Scaffold(

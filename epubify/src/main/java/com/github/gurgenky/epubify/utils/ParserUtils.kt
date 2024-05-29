@@ -4,6 +4,8 @@ import android.os.Build
 import androidx.annotation.RequiresApi
 import com.github.gurgenky.epubify.model.Image
 import com.github.gurgenky.epubify.model.JsoupOutput
+import com.github.gurgenky.epubify.model.Manifest
+import com.github.gurgenky.epubify.model.Toc
 import com.github.gurgenky.epubify.model.XmlTag
 import com.github.gurgenky.epubify.parser.EpubWhitelist
 import org.apache.commons.text.StringEscapeUtils
@@ -11,13 +13,43 @@ import org.jsoup.Jsoup
 import org.jsoup.nodes.Element
 import org.jsoup.nodes.Node
 import org.jsoup.nodes.TextNode
-import org.jsoup.safety.Safelist
 import java.io.File
 import java.io.InputStream
 import java.nio.file.Files
 import java.nio.file.StandardCopyOption
 import kotlin.io.encoding.Base64
 import kotlin.io.encoding.ExperimentalEncodingApi
+
+/**
+ * The template for the body of a document.
+ */
+private val documentBodyTemplate = """
+    <div id="%s">
+        %s
+    </div>
+""".trimIndent()
+
+/**
+ * Flattens a Toc to a list of entries.
+ * @return The list of all entries.
+ */
+internal val Toc.flatten: List<Toc.Entry> get() = entries.flatMap { it.allChildren }
+
+/**
+ * Gets all children of a Toc.Entry.
+ * @return The list of all children.
+ */
+internal val Toc.Entry.allChildren: List<Toc.Entry> get() {
+    val allChildren = mutableSetOf<Toc.Entry>()
+
+    fun visit(entry: Toc.Entry) {
+        allChildren.add(entry)
+        entry.children.forEach { visit(it) }
+    }
+
+    visit(this)
+    return allChildren.toList()
+}
 
 /**
  * Selects a tag with the given name from the list of child tags.
@@ -53,6 +85,7 @@ internal fun InputStream.toTempFile() : File {
  * @return The parsed document.
  */
 internal fun File.parseDocument(
+    manifest: Manifest.Item,
     parsedImages: List<Image>
 ) : JsoupOutput {
     val document = Jsoup.parse(this, "UTF-8")
@@ -61,8 +94,10 @@ internal fun File.parseDocument(
     val bodyElement: Element? = document.body()
     val titleElement: Element? = document.selectFirst("h1, h2, h3, h4, h5, h6")
     val title: String = StringEscapeUtils.unescapeHtml4(titleElement?.html()) ?: ""
+    val href = manifest.href.substringBefore(".")
 
     bodyContent = bodyElement?.let { modifyImageEntries(it, parsedImages).html() } ?: ""
+    bodyContent = documentBodyTemplate.format(href, bodyContent)
     bodyContent = Jsoup.clean(bodyContent, EpubWhitelist)
 
     return JsoupOutput(title, bodyContent)

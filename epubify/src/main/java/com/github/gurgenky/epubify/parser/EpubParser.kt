@@ -12,6 +12,8 @@ import com.github.gurgenky.epubify.model.TempChapter
 import com.github.gurgenky.epubify.model.Toc
 import com.github.gurgenky.epubify.model.XmlTag
 import com.github.gurgenky.epubify.model.XmlTree
+import com.github.gurgenky.epubify.utils.allChildren
+import com.github.gurgenky.epubify.utils.flatten
 import com.github.gurgenky.epubify.utils.parseDocument
 import com.github.gurgenky.epubify.utils.selectTag
 import com.github.gurgenky.epubify.utils.toTempFile
@@ -257,17 +259,19 @@ internal object EpubParser {
             parseChaptersUsingToc(
                 parent,
                 toc,
-                orderedFiles,
                 manifest,
+                orderedFiles,
                 images
             )
         } else {
             parseChaptersWithSpine(
+                manifest,
                 orderedFiles,
                 images
             )
         }.map {
-            Chapter(it.title.orEmpty(), it.content)
+            val tempChapter = it.second
+            Chapter(tempChapter.title.orEmpty(), tempChapter.content)
         }
 
         return Book(title, author, cover, chapters, images)
@@ -285,65 +289,47 @@ internal object EpubParser {
     private fun parseChaptersUsingToc(
         parent: File,
         toc: Toc,
-        orderedFiles: List<File>,
         manifest: Manifest,
+        orderedFiles: List<File>,
         images: List<Image>
-    ): List<TempChapter> {
-        val filesBeforeToc = orderedFiles.takeWhile { file ->
-            val item = manifest.items.find { item -> item.href == file.name }
-            val tocItem = toc.entries.find { entry -> entry.href == item?.href }
-            tocItem == null
+    ): List<Pair<String, TempChapter>> {
+        val filesMissingFromToc = orderedFiles.filter { file ->
+            toc.flatten.none { entry ->
+                val tocItemPath = entry.href.split("#").first()
+                file.absolutePath.contains(tocItemPath)
+            }
         }
 
-        return parseChaptersWithSpine(filesBeforeToc, images) + toc.entries.map { entry ->
-            val content = if (entry.children.isNotEmpty()) {
-                val outputs = entry.children.distinctBy {
-                    val tocItemPath = it.href.split("#").first()
-                    tocItemPath
-                }.map {
-                    val tocItemPath = it.href.split("#").first()
-                    val item = manifest.items.find { item -> item.href == tocItemPath }
-                    val file = File(parent.absolutePath + "/" + item?.href)
-                    file.parseDocument(images)
-                }
-                TempChapter(entry.title, outputs.joinToString("\n\n") { it.content })
-            } else {
-                val tocItemPath = entry.href.split("#").first()
-                val item = manifest.items.find { item -> item.href == tocItemPath }
-                val file = File(parent.absolutePath + "/" + item?.href)
-                file.parseDocument(images)
-            }
-            content
+        val chaptersFromSpine = parseChaptersWithSpine(manifest, filesMissingFromToc, images)
+        val chaptersFromToc = toc.flatten.map { entry ->
+            val tocItemPath = entry.href.split("#").first()
+            val item = manifest.items.find { item -> item.href == tocItemPath }
+            val file = File(parent.absolutePath + "/" + item?.href)
+            tocItemPath to file.parseDocument(item as Manifest.Item, images)
+        }
+
+        return (chaptersFromSpine + chaptersFromToc).sortedBy { (path, _) ->
+            orderedFiles.indexOfFirst { it.absolutePath.contains(path) }
         }
     }
 
     /**
      * Parses the chapters of an EPUB file using ordered files from spine.
+     * @param manifest The parsed manifest.
      * @param orderedFiles The ordered files of the EPUB file.
      * @param images The parsed images.
      * @return The parsed chapters.
      */
     private fun parseChaptersWithSpine(
+        manifest: Manifest,
         orderedFiles: List<File>,
         images: List<Image>
-    ): List<TempChapter> {
-        var chapterIndex = 0
-
+    ): List<Pair<String, TempChapter>> {
         return orderedFiles.map {
-            val output = it.parseDocument(images)
+            val item = manifest.items.find { item -> it.absolutePath.contains(item.href) }
+            val output = it.parseDocument(item as Manifest.Item, images)
 
-            val chapterTitle = output.title ?: if (chapterIndex == 0) "" else null
-            if (chapterTitle != null)
-                chapterIndex += 1
-
-            output to chapterTitle
-        }.groupBy {
-            it.second
-        }.map { (index, list) ->
-            TempChapter(
-                title = list.first().first.title ?: "Chapter $index",
-                content = list.joinToString("\n\n") { it.first.content }
-            )
+            it.path to output
         }
     }
 
@@ -413,17 +399,15 @@ internal object EpubParser {
             ?: return emptyList()
 
         val entries = mutableListOf<Toc.Entry>()
-        for (list in lists.childTags) {
-            val listItems = list.childTags.filter { it.name == "li" }
-            for (item in listItems) {
-                val link = item.selectTag("a")
-                val text = link?.content ?: ""
-                val href = link?.getAttributeValue("href") ?: ""
 
-                val sublist = item.selectTag("ol") ?: item.selectTag("ul")
-                val children = sublist?.let { parseLinks(it) } ?: emptyList()
-                entries.add(Toc.Entry(text, href, children))
-            }
+        for (item in lists.childTags) {
+            if (item.name != "li") continue
+
+            val text = item.selectTag("a")?.content ?: ""
+            val content = item.selectTag("a")?.getAttributeValue("href") ?: ""
+
+            val children = parseLinks(item)
+            entries.add(Toc.Entry(text, content, children))
         }
 
         return entries

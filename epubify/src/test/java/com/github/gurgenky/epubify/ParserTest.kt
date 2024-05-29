@@ -29,8 +29,7 @@ class ParserTest {
         // Chapters include the cover pages as well
         assertEquals(7, epub.chapters.size)
 
-        val title = StringEscapeUtils.unescapeHtml4("Chapter&nbsp;1.&nbsp;Introduction")
-        assertEquals(StringEscapeUtils.unescapeHtml4(title), epub.chapters[3].title)
+        assertEquals("1. Introduction", epub.chapters[3].title)
     }
 
     @Test

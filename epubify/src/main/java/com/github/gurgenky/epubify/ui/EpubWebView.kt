@@ -3,6 +3,8 @@ package com.github.gurgenky.epubify.ui
 import android.animation.ObjectAnimator
 import android.annotation.SuppressLint
 import android.content.Context
+import android.content.Intent
+import android.net.Uri
 import android.util.AttributeSet
 import android.view.GestureDetector
 import android.webkit.JavascriptInterface
@@ -11,6 +13,7 @@ import android.webkit.WebResourceRequest
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import com.github.gurgenky.epubify.R
+import com.github.gurgenky.epubify.parser.EpubWhitelist.ANCHOR_SCROLL_SCHEME
 import com.github.gurgenky.epubify.utils.ViewerGestureListener
 import com.github.gurgenky.epubify.utils.readRawResource
 import kotlin.math.roundToInt
@@ -130,12 +133,35 @@ internal class EpubWebView @JvmOverloads constructor(
         setOnTouchListener { _, motionEvent ->
             gestureDetector.onTouchEvent(motionEvent)
         }
+        setOnLongClickListener { true }
+        isLongClickable = false
+        isHapticFeedbackEnabled = false
     }
 
     /**
      * A WebViewClient that calculates the total number of pages in the epub file.
      */
     private inner class EpubWebViewClient : WebViewClient() {
+
+        override fun shouldOverrideUrlLoading(
+            view: WebView,
+            request: WebResourceRequest
+        ): Boolean {
+            if (request.url.scheme == ANCHOR_SCROLL_SCHEME) {
+                val id = request.url.host
+                println(id)
+                evaluateJavascript("scrollToElement('${id}');", null)
+                return true
+            }
+
+            val requestIntent = Intent(
+                Intent.ACTION_VIEW,
+                Uri.parse(request.url.toString())
+            )
+            val chooser = Intent.createChooser(requestIntent, title)
+            context.startActivity(chooser)
+            return true
+        }
 
         /**
          * onPageFinished callback for the WebView that is called when the page is finished loading.
@@ -183,19 +209,31 @@ internal class EpubWebView @JvmOverloads constructor(
         }
 
         /**
-         * Changes the page in the WebView.
-         * Calls the onPageChanged callback with the specified page number.
+         * Loads the specified page number in the WebView.
+         * Calls scrollToPage in the WebView and changes the current page number.
+         * @param page The page number.
          */
         fun loadPage(page: Int) {
             post {
                 evaluateJavascript("scrollToPage(${page});", null)
-                currentPage = page
-                onPageChanged?.invoke(page, totalPages)
+                setCurrentPage(page)
             }
         }
 
         /**
+         * Sets the current page number and calls the onPageChanged callback.
+         * @param page The current page number.
+         */
+        @JavascriptInterface
+        fun setCurrentPage(page: Int) {
+            currentPage = page
+            onPageChanged?.invoke(page, totalPages)
+        }
+
+        /**
          * Scrolls to the specified position in the WebView.
+         * @param pixelRatio The pixel ratio passed from the WebView.
+         * @param position The position to scroll to.
          */
         @JavascriptInterface
         @Suppress("unused")
@@ -207,6 +245,7 @@ internal class EpubWebView @JvmOverloads constructor(
 
         /**
          * Initializes the chapter columns in the WebView.
+         * @param onComplete The callback to call when the chapter columns are initialized.
          */
         private fun initChapterColumns(onComplete: ((pages: Int) -> Unit)? = null) {
             val chapterPaddingScript = context.resources.readRawResource(R.raw.chapter_column_script)
