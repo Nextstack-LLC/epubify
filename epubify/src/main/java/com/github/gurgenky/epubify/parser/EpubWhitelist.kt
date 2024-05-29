@@ -22,14 +22,8 @@ internal object EpubWhitelist : Safelist() {
             "sub", "sup", "table", "tbody", "td", "tfoot", "th", "thead", "tr", "u",
             "ul"
         )
-        addAttributes("h1", "id")
-        addAttributes("h2", "id")
-        addAttributes("h3", "id")
-        addAttributes("h4", "id")
-        addAttributes("h5", "id")
-        addAttributes("h6", "id")
-        addAttributes("div", "id")
-        addAttributes("section", "id")
+        addAttributes(":all", "id")
+        addAttributes(":all", "class")
         addAttributes("a", "href", "title")
         addAttributes("blockquote", "cite")
         addAttributes("col", "span", "width")
