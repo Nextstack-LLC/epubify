@@ -1,18 +1,19 @@
 package com.github.gurgenky.epubify.parser
 
 import android.os.Build
+import android.util.Base64
 import androidx.annotation.RequiresApi
 import com.github.gurgenky.epubify.model.Book
 import com.github.gurgenky.epubify.model.Chapter
 import com.github.gurgenky.epubify.model.Image
-import com.github.gurgenky.epubify.model.Manifest
-import com.github.gurgenky.epubify.model.Metadata
-import com.github.gurgenky.epubify.model.Spine
+import com.github.gurgenky.epubify.model.format.Manifest
+import com.github.gurgenky.epubify.model.format.Metadata
+import com.github.gurgenky.epubify.model.format.Spine
 import com.github.gurgenky.epubify.model.TempChapter
-import com.github.gurgenky.epubify.model.Toc
-import com.github.gurgenky.epubify.model.XmlTag
+import com.github.gurgenky.epubify.model.format.Toc
+import com.github.gurgenky.epubify.model.format.XmlTag
 import com.github.gurgenky.epubify.model.XmlTree
-import com.github.gurgenky.epubify.utils.allChildren
+import com.github.gurgenky.epubify.model.style.Style
 import com.github.gurgenky.epubify.utils.flatten
 import com.github.gurgenky.epubify.utils.parseDocument
 import com.github.gurgenky.epubify.utils.selectTag
@@ -274,7 +275,9 @@ internal object EpubParser {
             Chapter(tempChapter.title.orEmpty(), tempChapter.content)
         }
 
-        return Book(title, author, cover, chapters, images)
+        val styles = parseStyles(parent)
+
+        return Book(title, author, cover, chapters, images, styles)
     }
 
     /**
@@ -411,5 +414,32 @@ internal object EpubParser {
         }
 
         return entries
+    }
+
+    /**
+     * Parses the CSS styles of an EPUB file.
+     * @param file The root file of the EPUB file.
+     * @return The parsed CSS styles with base64 encoded fonts.
+     */
+    private fun parseStyles(file: File): List<Style> {
+        val cssFiles = file.parentFile?.walkTopDown()?.filter { it.extension == "css" }
+        val fonts = file.parentFile?.walkTopDown()?.filter { it.extension == "ttf" || it.extension == "otf" }
+
+        return cssFiles?.map {
+            val content = it.readLines()
+            val modified = content.joinToString("\n") { line ->
+                if (line.contains("url(")) {
+                    val url = line.substringAfter("url(").substringBefore(")").replace("\"", "")
+                    val fontFile = fonts?.find { font -> font.name == url.substringAfterLast("/") }
+                    if (fontFile != null) {
+                        val fontContent = fontFile.readBytes()
+                        val base64 = Base64.encodeToString(fontContent, Base64.NO_WRAP)
+                        line.replace(url, "data:font/ttf;base64,$base64")
+                    } else line
+                } else line
+            }
+
+            Style(modified)
+        }?.toList() ?: emptyList()
     }
 }

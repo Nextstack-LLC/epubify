@@ -24,15 +24,18 @@ private val chapterTemplate = """
 internal suspend fun Book.asHtml(
     context: Context
 ): String {
-        val htmlTemplate = withContext(Dispatchers.IO) {
-            context.resources.readRawResource(R.raw.epub_template)
-        }
-
-        val body = chapters.joinToString("\n") {
-            chapterTemplate.format(it.content)
-        }
-        return htmlTemplate.format(title, body)
+    val htmlTemplate = withContext(Dispatchers.IO) {
+        context.resources.readRawResource(R.raw.epub_template)
     }
+
+    val body = chapters.joinToString("\n") {
+        chapterTemplate.format(it.content)
+    }
+
+    val style = styles.joinToString("\n") { it.css }
+
+    return htmlTemplate.format(title, style, body)
+}
 
 /**
  * Reads a raw resource file and returns its content as a string.

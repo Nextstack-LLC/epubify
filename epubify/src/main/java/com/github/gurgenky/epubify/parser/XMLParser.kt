@@ -1,6 +1,6 @@
 package com.github.gurgenky.epubify.parser
 
-import com.github.gurgenky.epubify.model.XmlTag
+import com.github.gurgenky.epubify.model.format.XmlTag
 import com.github.gurgenky.epubify.model.XmlTree
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext

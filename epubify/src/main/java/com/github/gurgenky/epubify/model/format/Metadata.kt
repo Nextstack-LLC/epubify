@@ -1,4 +1,6 @@
-package com.github.gurgenky.epubify.model
+package com.github.gurgenky.epubify.model.format
+
+import com.github.gurgenky.epubify.model.Image
 
 /**
  * Data class representing the metadata of a book in an EPUB file.

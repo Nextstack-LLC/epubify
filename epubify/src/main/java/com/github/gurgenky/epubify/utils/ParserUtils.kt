@@ -1,12 +1,13 @@
 package com.github.gurgenky.epubify.utils
 
 import android.os.Build
+import android.util.Base64
 import androidx.annotation.RequiresApi
 import com.github.gurgenky.epubify.model.Image
 import com.github.gurgenky.epubify.model.JsoupOutput
-import com.github.gurgenky.epubify.model.Manifest
-import com.github.gurgenky.epubify.model.Toc
-import com.github.gurgenky.epubify.model.XmlTag
+import com.github.gurgenky.epubify.model.format.Manifest
+import com.github.gurgenky.epubify.model.format.Toc
+import com.github.gurgenky.epubify.model.format.XmlTag
 import com.github.gurgenky.epubify.parser.EpubWhitelist
 import org.apache.commons.text.StringEscapeUtils
 import org.jsoup.Jsoup
@@ -17,8 +18,6 @@ import java.io.File
 import java.io.InputStream
 import java.nio.file.Files
 import java.nio.file.StandardCopyOption
-import kotlin.io.encoding.Base64
-import kotlin.io.encoding.ExperimentalEncodingApi
 
 /**
  * The template for the body of a document.
@@ -138,11 +137,10 @@ private fun modifyImageEntries(
  * @param image The image to replace the element with.
  * @return The modified element.
  */
-@OptIn(ExperimentalEncodingApi::class)
 private fun handleImageNode(
     image: Image
 ) : Node {
-    val base64 = Base64.encode(image.image)
+    val base64 = Base64.encodeToString(image.image, Base64.NO_WRAP)
     val dataUri = "data:image/${image.path.substringAfterLast(".")};base64,$base64"
     return Element("img").attr("src", dataUri)
 }

@@ -1,5 +1,4 @@
-package com.github.gurgenky.epubify.model
-
+package com.github.gurgenky.epubify.model.format
 
 /**
  * Data class representing the manifest of an EPUB file.

@@ -1,5 +1,5 @@
 var columnWidth;
-var columnGap = 0;
+var columnGap = 20;
 
 function initColumns() {
     // Get the body element
@@ -19,7 +19,7 @@ function initColumns() {
     var newBodyWidth = pageCount * windowWidth;
 
     // Set the height and width of the body
-    body.style.height = windowHeight + 'px';
+    body.style.height = windowHeight - 20 + 'px';
     body.style.width = newBodyWidth + 'px';
 
     // Set the number of columns to match the number of pages
@@ -29,7 +29,7 @@ function initColumns() {
     body.style.webkitColumnHeight = windowHeight;
     body.style.webkitColumnGap = columnGap + 'px';
     body.style.padding = '0px';
-    body.style.margin = '0px';
+    body.style.marginLeft = '10px';
 
     // Scroll to the first page
     return pageCount;

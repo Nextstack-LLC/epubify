@@ -6,6 +6,7 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.util.AttributeSet
+import android.util.Base64
 import android.view.GestureDetector
 import android.webkit.JavascriptInterface
 import android.webkit.WebResourceError
@@ -203,7 +204,6 @@ internal class EpubWebView @JvmOverloads constructor(
                 totalPages = pages
                 if (pages > 0) {
                     onPagesInitialized?.invoke(pages)
-                    loadPage(0)
                 }
             }
         }
