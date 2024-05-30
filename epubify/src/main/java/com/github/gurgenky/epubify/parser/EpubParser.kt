@@ -14,6 +14,7 @@ import com.github.gurgenky.epubify.model.format.Toc
 import com.github.gurgenky.epubify.model.format.XmlTag
 import com.github.gurgenky.epubify.model.XmlTree
 import com.github.gurgenky.epubify.model.style.Style
+import com.github.gurgenky.epubify.utils.allChildren
 import com.github.gurgenky.epubify.utils.flatten
 import com.github.gurgenky.epubify.utils.parseDocument
 import com.github.gurgenky.epubify.utils.selectTag
@@ -304,14 +305,33 @@ internal object EpubParser {
         }
 
         val chaptersFromSpine = parseChaptersWithSpine(manifest, filesMissingFromToc, images)
-        val chaptersFromToc = toc.flatten.map { entry ->
-            val tocItemPath = entry.href.split("#").first()
-            val item = manifest.items.find { item -> item.href == tocItemPath }
-            val file = File(parent.absolutePath + "/" + item?.href)
-            tocItemPath to file.parseDocument(item as Manifest.Item, images)
+        val chaptersFromToc = toc.entries.map { entry ->
+            if (entry.children.isNotEmpty()) {
+                val tocItemPath = entry.href.split("#").first()
+
+                val children = entry.allChildren.distinctBy {
+                    val childPath = it.href.split("#").first()
+                    childPath
+                }.map { child ->
+                    val childPath = child.href.split("#").first()
+                    val item = manifest.items.find { item -> item.href == childPath }
+                    val file = File(parent.absolutePath + "/" + item?.href)
+                    file.parseDocument(item as Manifest.Item, images)
+                }
+
+                val merged = children.joinToString("\n") { it.content }
+                tocItemPath to TempChapter(entry.title, merged)
+            } else {
+                val tocItemPath = entry.href.split("#").first()
+                val item = manifest.items.find { item -> item.href == tocItemPath }
+                val file = File(parent.absolutePath + "/" + item?.href)
+                tocItemPath to file.parseDocument(item as Manifest.Item, images)
+            }
         }
 
-        return (chaptersFromSpine + chaptersFromToc).sortedBy { (path, _) ->
+        return (chaptersFromSpine + chaptersFromToc).distinctBy {
+            it.first.substringAfterLast("/")
+        }.sortedBy { (path, _) ->
             orderedFiles.indexOfFirst { it.absolutePath.contains(path) }
         }
     }

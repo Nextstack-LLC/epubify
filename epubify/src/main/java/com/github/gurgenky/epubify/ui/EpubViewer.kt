@@ -14,6 +14,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -58,8 +60,9 @@ fun EpubViewer(
     onSingleTap: (() -> Unit)? = null
 ) {
     val coroutineScope = rememberCoroutineScope()
-    var book by remember {
-        mutableStateOf<Book?>(null)
+    val path by rememberUpdatedState(newValue = epubPath)
+    var book by rememberSaveable(saver = Book.Saver()) {
+        mutableStateOf(null)
     }
 
     var parseError by remember {
@@ -78,10 +81,10 @@ fun EpubViewer(
         parseError = parseError
     )
 
-    LaunchedEffect(epubPath) {
+    LaunchedEffect(path) {
         coroutineScope.launch {
             book = try {
-                EpubParser.parse(epubPath)
+                EpubParser.parse(path)
             } catch (e: Exception) {
                 parseError = true
                 null
@@ -114,8 +117,9 @@ fun EpubViewer(
     onSingleTap: (() -> Unit)? = null
 ) {
     val coroutineScope = rememberCoroutineScope()
-    var book by remember {
-        mutableStateOf<Book?>(null)
+    val file by rememberUpdatedState(newValue = epub)
+    var book by rememberSaveable(saver = Book.Saver()) {
+        mutableStateOf(null)
     }
 
     var parseError by remember {
@@ -134,10 +138,10 @@ fun EpubViewer(
         parseError = parseError
     )
 
-    LaunchedEffect(epub) {
+    LaunchedEffect(file) {
         coroutineScope.launch {
             book = try {
-                EpubParser.parse(epub)
+                EpubParser.parse(file)
             } catch (e: Exception) {
                 parseError = true
                 null
@@ -174,8 +178,9 @@ fun EpubViewer(
     onSingleTap: (() -> Unit)? = null
 ) {
     val coroutineScope = rememberCoroutineScope()
-    var book by remember {
-        mutableStateOf<Book?>(null)
+    val stream by rememberUpdatedState(newValue = epubInputStream)
+    var book by rememberSaveable(saver = Book.Saver()) {
+        mutableStateOf(null)
     }
 
     var parseError by remember {
@@ -194,10 +199,10 @@ fun EpubViewer(
         parseError = parseError
     )
 
-    LaunchedEffect(epubInputStream) {
+    LaunchedEffect(stream) {
         coroutineScope.launch {
             book = try {
-                EpubParser.parse(epubInputStream)
+                EpubParser.parse(stream)
             } catch (e: Exception) {
                 parseError = true
                 null
@@ -229,10 +234,10 @@ private fun ViewerContent(
         EpubWebView(context)
     }
 
-    var isLoaded by remember {
+    var isLoaded by rememberSaveable(key = book?.title) {
         mutableStateOf(false)
     }
-    var isError by remember {
+    var isError by rememberSaveable(key = book?.title) {
         mutableStateOf(false)
     }
 
