@@ -1,12 +1,25 @@
+import java.io.FileInputStream
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.androidLibrary)
     alias(libs.plugins.jetbrainsKotlinAndroid)
     id("kotlin-parcelize")
+    id("maven-publish")
 }
+val mavenPropertiesFile = rootProject.file("publishing.properties")
+val mavenProperties = Properties()
+mavenProperties.load(FileInputStream(mavenPropertiesFile))
 
 android {
     namespace = "com.github.gurgenky.epubify"
     compileSdk = 34
+
+    publishing {
+        singleVariant("release") {
+            withSourcesJar()
+        }
+    }
 
     defaultConfig {
         minSdk = 24
@@ -50,6 +63,48 @@ android {
 
     kotlinOptions {
         jvmTarget = "1.8"
+    }
+}
+
+afterEvaluate {
+    publishing {
+        publications {
+            create<MavenPublication>("release") {
+                from(components["release"])
+                groupId =  mavenProperties["GROUP"] as String
+                artifactId = mavenProperties["ARTIFACT_ID"] as String
+                version = mavenProperties["VERSION_NAME"] as String
+
+                pom {
+                    packaging = "aar"
+                    name.set(mavenProperties["ARTIFACT_NAME"] as String)
+                    description.set(mavenProperties["POM_DESCRIPTION"] as String)
+                    url.set(mavenProperties["POM_URL"] as String)
+                    inceptionYear.set("2024")
+
+                    licenses {
+                        license {
+                            name.set(mavenProperties["POM_LICENCE_NAME"] as String)
+                            url.set(mavenProperties["POM_LICENCE_URL"] as String)
+                        }
+                    }
+
+                    developers {
+                        developer {
+                            id.set(mavenProperties["POM_DEVELOPER_ID"] as String)
+                            name.set(mavenProperties["POM_DEVELOPER_NAME"] as String)
+                            email.set(mavenProperties["POM_DEVELOPER_EMAIL"] as String)
+                        }
+                    }
+
+                    scm {
+                        connection.set(mavenProperties["POM_SCM_CONNECTION"] as String)
+                        developerConnection.set(mavenProperties["POM_SCM_DEV_CONNECTION"] as String)
+                        url.set(mavenProperties["POM_SCM_URL"] as String)
+                    }
+                }
+            }
+        }
     }
 }
 

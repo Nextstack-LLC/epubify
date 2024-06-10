@@ -34,3 +34,5 @@ google-services.json
 
 # DS_Store files
 .DS_Store
+
+publishing.properties
