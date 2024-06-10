@@ -27,6 +27,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.zIndex
 import com.github.gurgenky.epubify.model.Book
+import com.github.gurgenky.epubify.model.ParseOptions
 import com.github.gurgenky.epubify.parser.EpubParser
 import com.github.gurgenky.epubify.utils.asHtml
 import kotlinx.coroutines.Dispatchers
@@ -42,6 +43,7 @@ import java.io.InputStream
  * @param epubPath Path to the epub file
  * @param modifier Modifier
  * @param state EpubViewerState for controlling the viewer
+ * @param parseOptions Options for parsing the epub file
  * @param loading Composable function for loading state
  * @param error Composable function for error state
  * @param onInitialized Callback for when the epub file is initialized
@@ -53,6 +55,7 @@ fun EpubViewer(
     epubPath: String,
     modifier: Modifier = Modifier,
     state: EpubViewerState = rememberEpubViewerState(),
+    parseOptions: ParseOptions = ParseOptions(),
     loading: @Composable BoxScope.() -> Unit = {},
     error: @Composable BoxScope.() -> Unit = {},
     onInitialized: ((Int) -> Unit)? = null,
@@ -70,13 +73,13 @@ fun EpubViewer(
     }
 
     ViewerContent(
-        modifier = modifier,
-        state = state,
         book = book,
+        state = state,
+        modifier = modifier,
         loading = loading,
+        error = error,
         onInitialized = onInitialized,
         onBookPageChanged = onBookPageChanged,
-        error = error,
         onSingleTap = onSingleTap,
         parseError = parseError
     )
@@ -84,7 +87,7 @@ fun EpubViewer(
     LaunchedEffect(path) {
         coroutineScope.launch {
             book = try {
-                EpubParser.parse(path)
+                EpubParser.parse(path, parseOptions)
             } catch (e: Exception) {
                 parseError = true
                 null
@@ -99,6 +102,7 @@ fun EpubViewer(
  * @param epub File of the epub
  * @param modifier Modifier
  * @param state EpubViewerState for controlling the viewer
+ * @param parseOptions Options for parsing the epub file
  * @param loading Composable function for loading state
  * @param error Composable function for error state
  * @param onInitialized Callback for when the epub file is initialized
@@ -110,6 +114,7 @@ fun EpubViewer(
     epub: File,
     modifier: Modifier = Modifier,
     state: EpubViewerState = rememberEpubViewerState(),
+    parseOptions: ParseOptions = ParseOptions(),
     loading: @Composable BoxScope.() -> Unit = {},
     error: @Composable BoxScope.() -> Unit = {},
     onInitialized: ((Int) -> Unit)? = null,
@@ -127,13 +132,13 @@ fun EpubViewer(
     }
 
     ViewerContent(
-        modifier = modifier,
-        state = state,
         book = book,
+        state = state,
+        modifier = modifier,
         loading = loading,
+        error = error,
         onInitialized = onInitialized,
         onBookPageChanged = onBookPageChanged,
-        error = error,
         onSingleTap = onSingleTap,
         parseError = parseError
     )
@@ -141,7 +146,7 @@ fun EpubViewer(
     LaunchedEffect(file) {
         coroutineScope.launch {
             book = try {
-                EpubParser.parse(file)
+                EpubParser.parse(file, parseOptions)
             } catch (e: Exception) {
                 parseError = true
                 null
@@ -157,6 +162,7 @@ fun EpubViewer(
  * @param epubInputStream InputStream of the epub file
  * @param modifier Modifier
  * @param state EpubViewerState for controlling the viewer
+ * @param parseOptions Options for parsing the epub file
  * @param loading Composable function for loading state
  * @param error Composable function for error state
  * @param onInitialized Callback for when the epub file is initialized
@@ -171,6 +177,7 @@ fun EpubViewer(
     epubInputStream: InputStream,
     modifier: Modifier = Modifier,
     state: EpubViewerState = rememberEpubViewerState(),
+    parseOptions: ParseOptions = ParseOptions(),
     loading: @Composable BoxScope.() -> Unit = {},
     error: @Composable BoxScope.() -> Unit = {},
     onInitialized: ((Int) -> Unit)? = null,
@@ -188,13 +195,13 @@ fun EpubViewer(
     }
 
     ViewerContent(
-        modifier = modifier,
-        state = state,
         book = book,
+        state = state,
+        modifier = modifier,
         loading = loading,
+        error = error,
         onInitialized = onInitialized,
         onBookPageChanged = onBookPageChanged,
-        error = error,
         onSingleTap = onSingleTap,
         parseError = parseError
     )
@@ -202,7 +209,7 @@ fun EpubViewer(
     LaunchedEffect(stream) {
         coroutineScope.launch {
             book = try {
-                EpubParser.parse(stream)
+                EpubParser.parse(stream, parseOptions)
             } catch (e: Exception) {
                 parseError = true
                 null
@@ -220,8 +227,8 @@ private fun ViewerContent(
     book: Book?,
     state: EpubViewerState,
     modifier: Modifier = Modifier,
-    loading: @Composable BoxScope.() -> Unit,
-    error: @Composable BoxScope.() -> Unit,
+    loading: @Composable() (BoxScope.() -> Unit),
+    error: @Composable() (BoxScope.() -> Unit),
     onInitialized: ((Int) -> Unit)?,
     onBookPageChanged: ((Int, Int) -> Unit)?,
     onSingleTap: (() -> Unit)?,

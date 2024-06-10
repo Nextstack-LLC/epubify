@@ -28,6 +28,22 @@ private val documentBodyTemplate = """
     </div>
 """.trimIndent()
 
+val bodyDefaultFontsTemplate = """
+    body {
+        font-family: %s;
+    }
+""".trimIndent()
+
+/**
+ * Template for a font declaration.
+ */
+val fontFamilyDeclarationTemplate = """
+    @font-face {
+        font-family: '%s';
+        src: url(data:font/ttf;base64,%s);
+    }
+""".trimIndent()
+
 /**
  * Flattens a Toc to a list of entries.
  * @return The list of all entries.

@@ -10,12 +10,19 @@ import com.github.gurgenky.epubify.model.format.Manifest
 import com.github.gurgenky.epubify.model.format.Metadata
 import com.github.gurgenky.epubify.model.format.Spine
 import com.github.gurgenky.epubify.model.TempChapter
+import com.github.gurgenky.epubify.model.ParseOptions
 import com.github.gurgenky.epubify.model.format.Toc
 import com.github.gurgenky.epubify.model.format.XmlTag
 import com.github.gurgenky.epubify.model.XmlTree
+import com.github.gurgenky.epubify.model.style.CustomFont
 import com.github.gurgenky.epubify.model.style.Style
 import com.github.gurgenky.epubify.utils.allChildren
+import com.github.gurgenky.epubify.utils.bodyDefaultFontsTemplate
 import com.github.gurgenky.epubify.utils.flatten
+import com.github.gurgenky.epubify.utils.fontFaceRegex
+import com.github.gurgenky.epubify.utils.fontFamilyDeclarationTemplate
+import com.github.gurgenky.epubify.utils.fontFamilyRegex
+import com.github.gurgenky.epubify.utils.fontUrlRegex
 import com.github.gurgenky.epubify.utils.parseDocument
 import com.github.gurgenky.epubify.utils.selectTag
 import com.github.gurgenky.epubify.utils.toTempFile
@@ -34,38 +41,42 @@ internal object EpubParser {
     /**
      * Parses an EPUB file from an input stream.
      * @param inputStream The input stream of the EPUB file.
+     * @param options Options for parsing the book.
      * @return The parsed book.
      */
     @RequiresApi(Build.VERSION_CODES.O)
-    suspend fun parse(inputStream: InputStream): Book {
+    suspend fun parse(inputStream: InputStream, options: ParseOptions): Book {
         val tempFile = inputStream.toTempFile()
-        return parse(tempFile)
+        return parse(tempFile, options)
     }
 
     /**
      * Parses an EPUB file from a file path.
      * @param filePath The path of the EPUB file.
+     * @param options Options for parsing the book.
      * @return The parsed book.
      */
-    suspend fun parse(filePath: String): Book {
-        return parse(File(filePath))
+    suspend fun parse(filePath: String, options: ParseOptions): Book {
+        return parse(File(filePath), options)
     }
 
     /**
      * Parses an EPUB file from a file.
      * @param file The EPUB file.
+     * @param options Options for parsing the book.
      * @return The parsed book.
      */
-    suspend fun parse(file: File): Book {
-        return parseAndCreateEbook(file)
+    suspend fun parse(file: File, options: ParseOptions): Book {
+        return parseAndCreateEbook(file, options)
     }
 
     /**
      * Parses an EPUB file and creates a book object.
      * @param file The EPUB file.
+     * @param options Options for parsing the book.
      * @return The parsed book.
      */
-    private suspend fun parseAndCreateEbook(file: File): Book =
+    private suspend fun parseAndCreateEbook(file: File, options: ParseOptions): Book =
         withContext(Dispatchers.IO) {
             val extractionRoot = file.parentFile?.resolve("extract")
                 ?: throw FileNotFoundException("Failed to create temp directory or file not found")
@@ -113,7 +124,8 @@ internal object EpubParser {
                 toc,
                 spine,
                 manifest,
-                metadata
+                metadata,
+                options
             ).also {
                 extractionRoot.deleteRecursively()
             }
@@ -243,7 +255,8 @@ internal object EpubParser {
         toc: Toc?,
         spine: Spine,
         manifest: Manifest,
-        metadata: Metadata
+        metadata: Metadata,
+        configuration: ParseOptions
     ): Book {
         val title = metadata.title
         val author = metadata.author
@@ -276,7 +289,7 @@ internal object EpubParser {
             Chapter(tempChapter.title.orEmpty(), tempChapter.content)
         }
 
-        val styles = parseStyles(parent)
+        val styles = parseStyles(parent, configuration)
 
         return Book(title, author, cover, chapters, images, styles)
     }
@@ -439,27 +452,61 @@ internal object EpubParser {
     /**
      * Parses the CSS styles of an EPUB file.
      * @param file The root file of the EPUB file.
+     * @param options Options for parsing the book.
      * @return The parsed CSS styles with base64 encoded fonts.
      */
-    private fun parseStyles(file: File): List<Style> {
+    private fun parseStyles(file: File, options: ParseOptions): List<Style> {
         val cssFiles = file.parentFile?.walkTopDown()?.filter { it.extension == "css" }
         val fonts = file.parentFile?.walkTopDown()?.filter { it.extension == "ttf" || it.extension == "otf" }
 
         return cssFiles?.map {
             val content = it.readLines()
             val modified = content.joinToString("\n") { line ->
-                if (line.contains("url(")) {
-                    val url = line.substringAfter("url(").substringBefore(")").replace("\"", "")
-                    val fontFile = fonts?.find { font -> font.name == url.substringAfterLast("/") }
-                    if (fontFile != null) {
-                        val fontContent = fontFile.readBytes()
-                        val base64 = Base64.encodeToString(fontContent, Base64.NO_WRAP)
-                        line.replace(url, "data:font/ttf;base64,$base64")
-                    } else line
-                } else line
+                when {
+                    options.parseEpubFonts && fontUrlRegex.containsMatchIn(line) -> {
+                        val url = line.substringAfter("url(").substringBefore(")").replace("\"", "")
+                        val fontFile = fonts?.find { font -> font.name == url.substringAfterLast("/") }
+                        if (fontFile != null) {
+                            val fontContent = fontFile.readBytes()
+                            val base64 = Base64.encodeToString(fontContent, Base64.NO_WRAP)
+                            line.replace(url, "data:font/ttf;base64,$base64")
+                        } else line
+                    }
+                    !options.parseEpubFonts && fontFamilyRegex.containsMatchIn(line) -> {
+                        ""
+                    }
+                    else -> line
+                }
             }
+            val result = if (!options.parseEpubFonts) {
+                replaceFontFaceDeclarations(modified, options.customFonts)
+            } else modified
 
-            Style(modified)
+            Style(result)
         }?.toList() ?: emptyList()
     }
+
+    /**
+     * Removes @font-face declarations from a CSS file.
+     * @param css The CSS file content.
+     * @param customFonts The custom fonts.
+     * @return The CSS file content without @font-face declarations.
+     */
+    private fun replaceFontFaceDeclarations(css: String, customFonts: List<CustomFont>): String {
+        val contentWithoutFontFace = css.replace(fontFaceRegex, "")
+
+        if (customFonts.isEmpty()) return contentWithoutFontFace
+
+        val fonts = customFonts.map { font ->
+            val base64 = Base64.encodeToString(font.bytes, Base64.NO_WRAP)
+            font.name to fontFamilyDeclarationTemplate.format(font.name, base64)
+        }
+
+        val names = fonts.joinToString(", ") { "\'${it.first}\'" }
+        val declarations = fonts.joinToString("\n") { it.second }
+        val bodyFontStyle = bodyDefaultFontsTemplate.format(names)
+
+        return "$declarations\n$bodyFontStyle\n$contentWithoutFontFace"
+    }
+
 }

@@ -18,6 +18,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.github.gurgenky.epubify.model.ParseOptions
+import com.github.gurgenky.epubify.model.style.CustomFont
 import com.github.gurgenky.epubify.ui.EpubViewer
 import com.github.gurgenky.epubify.ui.rememberEpubViewerState
 import com.github.gurgenky.epubifydemo.ui.theme.EpubifyDemoTheme
@@ -81,6 +83,15 @@ private fun Content() {
             modifier = Modifier
                 .padding(it),
             epubInputStream = epub,
+            parseOptions = ParseOptions(
+                parseEpubFonts = false,
+                customFonts = listOf(
+                    CustomFont(
+                        name = "Hanalei Fill",
+                        bytes = resources.openRawResource(R.raw.hanalei_fill).readBytes()
+                    ),
+                )
+            ),
             loading = {
                 CircularProgressIndicator()
             },
