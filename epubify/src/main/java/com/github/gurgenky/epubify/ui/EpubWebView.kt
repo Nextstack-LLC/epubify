@@ -6,9 +6,9 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.util.AttributeSet
-import android.util.Base64
 import android.view.GestureDetector
 import android.webkit.JavascriptInterface
+import android.webkit.WebChromeClient
 import android.webkit.WebResourceError
 import android.webkit.WebResourceRequest
 import android.webkit.WebView
@@ -50,9 +50,9 @@ internal class EpubWebView @JvmOverloads constructor(
     internal var onError: (() -> Unit)? = null
 
     /**
-     * onLoadingFinished callback for the WebView that is called when the loading is finished.
+     * onLoading callback for the WebView that is called when the WebView is loading.
      */
-    internal var onLoadingFinished: (() -> Unit)? = null
+    internal var onLoading: ((Boolean) -> Unit)? = null
 
     /**
      * The current page number.
@@ -68,6 +68,11 @@ internal class EpubWebView @JvmOverloads constructor(
      * A WebViewBridge for the WebView.
      */
     private val bridge = WebViewBridge()
+
+    /**
+     * A flag to check if the epub file is loaded.
+     */
+    private var loaded = false
 
     /**
      * A gesture detector for swipe gestures.
@@ -100,6 +105,7 @@ internal class EpubWebView @JvmOverloads constructor(
         settings.loadWithOverviewMode = true
 
         webViewClient = EpubWebViewClient()
+        webChromeClient = EpubWebChromeClient()
         addJavascriptInterface(bridge, "WebViewBridge")
         initTouchListeners()
     }
@@ -169,8 +175,8 @@ internal class EpubWebView @JvmOverloads constructor(
          */
         override fun onPageFinished(view: WebView, url: String?) {
             view.loadUrl("javascript:window.WebViewBridge.processPages();")
-            if (totalPages > 0) {
-                onLoadingFinished?.invoke()
+            if (totalPages == 0 && !loaded) {
+                onLoading?.invoke(true)
             }
         }
 
@@ -186,6 +192,18 @@ internal class EpubWebView @JvmOverloads constructor(
             if (error != null) {
                 onError?.invoke()
             }
+        }
+    }
+
+
+    /**
+     * A WebChromeClient that provides a callback for the WebView loading progress.
+     */
+    private inner class EpubWebChromeClient : WebChromeClient() {
+        override fun onProgressChanged(view: WebView?, newProgress: Int) {
+            super.onProgressChanged(view, newProgress)
+            onLoading?.invoke(newProgress < 100)
+            loaded = newProgress == 100
         }
     }
 
@@ -250,11 +268,11 @@ internal class EpubWebView @JvmOverloads constructor(
         private fun initChapterColumns(onComplete: ((pages: Int) -> Unit)? = null) {
             val chapterPaddingScript = context.resources.readRawResource(R.raw.chapter_column_script)
 
-            post {
+            postDelayed({
                 evaluateJavascript(chapterPaddingScript) {
                     onComplete?.invoke(it.toIntOrNull() ?: 0)
                 }
-            }
+            },100)
         }
     }
 }

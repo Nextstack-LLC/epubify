@@ -9,8 +9,10 @@ import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -36,6 +38,8 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.InputStream
+import kotlin.math.floor
+import kotlin.math.roundToInt
 
 /**
  * EpubViewer composable function
@@ -241,21 +245,30 @@ private fun ViewerContent(
         EpubWebView(context)
     }
 
-    var isLoaded by rememberSaveable(key = book?.title) {
+    var htmlContent by rememberSaveable(key = book?.title) {
+        mutableStateOf("")
+    }
+
+    var isLoaded by remember {
         mutableStateOf(false)
     }
-    var isError by rememberSaveable(key = book?.title) {
+
+    var isError by remember {
         mutableStateOf(false)
+    }
+
+    var latestPage by rememberSaveable(key = book?.title) {
+        mutableIntStateOf(0)
+    }
+
+    var totalPages by rememberSaveable {
+        mutableIntStateOf(0)
     }
 
     val transparencyModifier = if (isLoaded && !isError) {
         Modifier.alpha(1f)
     } else {
         Modifier.alpha(0f)
-    }
-
-    var htmlContent by remember {
-        mutableStateOf("")
     }
 
     Box(
@@ -284,16 +297,16 @@ private fun ViewerContent(
                 factory = { _ ->
                     epubViewer.apply {
                         // Set callbacks
-                        onLoadingFinished = {
-                            isLoaded = true
+                        onLoading = {
+                            isLoaded = it.not()
                         }
                         onPagesInitialized = {
                             state.setTotalPages(it)
                             onInitialized?.invoke(it)
                         }
-                        onPageChanged = { currentPage, totalPages ->
-                            onBookPageChanged?.invoke(currentPage, totalPages)
-                            state.setCurrentPage(currentPage)
+                        onPageChanged = { page, totalPages ->
+                            onBookPageChanged?.invoke(page, totalPages)
+                            state.setCurrentPage(page)
                         }
                         onTap = onSingleTap
                         onError = {
@@ -362,6 +375,23 @@ private fun ViewerContent(
     LaunchedEffect(book) {
         withContext(Dispatchers.IO) {
             htmlContent = book?.asHtml(context) ?: ""
+        }
+    }
+
+    LaunchedEffect(state.totalPages) {
+        if (totalPages != 0 && state.totalPages != totalPages) {
+            val currentProgress = latestPage / totalPages.toFloat()
+            val page = (currentProgress * state.totalPages).roundToInt()
+            epubViewer.loadPage(page)
+        }
+        if (state.totalPages != 0) {
+            totalPages = state.totalPages
+        }
+    }
+
+    DisposableEffect(Unit) {
+        onDispose {
+            latestPage = state.currentPageIndex
         }
     }
 }

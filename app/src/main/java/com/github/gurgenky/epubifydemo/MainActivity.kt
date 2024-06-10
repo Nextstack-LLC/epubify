@@ -85,13 +85,7 @@ private fun Content() {
                 .padding(it),
             epubInputStream = epub,
             parseOptions = ParseOptions(
-                parseEpubFonts = false,
-                customFonts = listOf(
-                    CustomFont(
-                        name = "Hanalei Fill",
-                        bytes = resources.openRawResource(R.raw.hanalei_fill).readBytes()
-                    ),
-                ),
+                parseEpubFonts = true,
                 customStyles = listOf(
                     Style(
                         css = "a { color: red; }"
