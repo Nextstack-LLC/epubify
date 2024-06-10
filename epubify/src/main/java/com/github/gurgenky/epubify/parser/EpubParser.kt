@@ -289,7 +289,7 @@ internal object EpubParser {
             Chapter(tempChapter.title.orEmpty(), tempChapter.content)
         }
 
-        val styles = parseStyles(parent, configuration)
+        val styles = parseStyles(parent, configuration) + configuration.customStyles
 
         return Book(title, author, cover, chapters, images, styles)
     }

@@ -28,7 +28,10 @@ private val documentBodyTemplate = """
     </div>
 """.trimIndent()
 
-val bodyDefaultFontsTemplate = """
+/**
+ * The template for the default fonts of a document.
+ */
+internal val bodyDefaultFontsTemplate = """
     body {
         font-family: %s;
     }
@@ -37,7 +40,7 @@ val bodyDefaultFontsTemplate = """
 /**
  * Template for a font declaration.
  */
-val fontFamilyDeclarationTemplate = """
+internal val fontFamilyDeclarationTemplate = """
     @font-face {
         font-family: '%s';
         src: url(data:font/ttf;base64,%s);

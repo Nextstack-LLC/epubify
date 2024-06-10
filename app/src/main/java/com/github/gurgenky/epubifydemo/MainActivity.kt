@@ -20,6 +20,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.github.gurgenky.epubify.model.ParseOptions
 import com.github.gurgenky.epubify.model.style.CustomFont
+import com.github.gurgenky.epubify.model.style.Style
 import com.github.gurgenky.epubify.ui.EpubViewer
 import com.github.gurgenky.epubify.ui.rememberEpubViewerState
 import com.github.gurgenky.epubifydemo.ui.theme.EpubifyDemoTheme
@@ -90,6 +91,11 @@ private fun Content() {
                         name = "Hanalei Fill",
                         bytes = resources.openRawResource(R.raw.hanalei_fill).readBytes()
                     ),
+                ),
+                customStyles = listOf(
+                    Style(
+                        css = "a { color: red; }"
+                    )
                 )
             ),
             loading = {
