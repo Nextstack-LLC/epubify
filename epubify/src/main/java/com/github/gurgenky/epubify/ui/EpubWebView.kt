@@ -60,6 +60,11 @@ internal class EpubWebView @JvmOverloads constructor(
     private var currentPage = 0
 
     /**
+     * The current zoom level.
+     */
+    private var currentZoomLevel = EpubViewerState.defaultZoomLevel
+
+    /**
      * The total number of pages in the epub file.
      */
     private var totalPages = 0
@@ -130,6 +135,16 @@ internal class EpubWebView @JvmOverloads constructor(
      */
     internal fun loadPage(page: Int) {
         bridge.loadPage(page)
+    }
+
+    /**
+     * Sets the zoom level for the WebView.
+     */
+    internal fun setZoomLevel(zoomLevel: Int) {
+        if (currentZoomLevel != zoomLevel) {
+            currentZoomLevel = zoomLevel
+            bridge.setZoom(zoomLevel)
+        }
     }
 
     /**
@@ -218,12 +233,7 @@ internal class EpubWebView @JvmOverloads constructor(
         @JavascriptInterface
         @Suppress("unused")
         fun processPages() {
-            initChapterColumns { pages ->
-                totalPages = pages
-                if (pages > 0) {
-                    onPagesInitialized?.invoke(pages)
-                }
-            }
+            initChapterColumns()
         }
 
         /**
@@ -256,23 +266,47 @@ internal class EpubWebView @JvmOverloads constructor(
         @JavascriptInterface
         @Suppress("unused")
         fun animateScrollToPosition(pixelRatio: Double, position: Int) {
-            val positionInPixels = (position * pixelRatio).roundToInt()
-            val anim = ObjectAnimator.ofInt(this@EpubWebView, "scrollX", scrollX, positionInPixels)
-            anim.setDuration(500).start()
+            post {
+                val positionInPixels = (position * pixelRatio).roundToInt()
+                val anim = ObjectAnimator.ofInt(this@EpubWebView, "scrollX", scrollX, positionInPixels)
+                anim.setDuration(500).start()
+            }
+        }
+
+        /**
+         * Updates column count in state.
+         * @param columnCount The column count.
+         */
+        @JavascriptInterface
+        @Suppress("unused")
+        fun setColumnCount(columnCount: Int) {
+            totalPages = columnCount
+            if (totalPages > 0) {
+                onPagesInitialized?.invoke(totalPages)
+            }
         }
 
         /**
          * Initializes the chapter columns in the WebView.
-         * @param onComplete The callback to call when the chapter columns are initialized.
          */
-        private fun initChapterColumns(onComplete: ((pages: Int) -> Unit)? = null) {
+        private fun initChapterColumns() {
             val chapterPaddingScript = context.resources.readRawResource(R.raw.chapter_column_script)
 
             postDelayed({
                 evaluateJavascript(chapterPaddingScript) {
-                    onComplete?.invoke(it.toIntOrNull() ?: 0)
+                    // Set initial zoom
+                    bridge.setZoom(currentZoomLevel)
                 }
-            },100)
+            },1000)
+        }
+
+        /**
+         * Sets the zoom level for the WebView.
+         */
+        fun setZoom(zoom: Int) {
+            post {
+                evaluateJavascript("setZoom($zoom);", null)
+            }
         }
     }
 }

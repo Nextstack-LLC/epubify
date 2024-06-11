@@ -11,12 +11,14 @@ import androidx.compose.runtime.saveable.rememberSaveable
  *
  * @param currentPage The current page being displayed.
  * @param pendingJumpPage The page to jump to once the current page is displayed.
- * @property totalPages The total number of pages in the EPUB.
+ * @param totalPages The total number of pages in the EPUB.
+ * @param zoomLevel The current zoom level.
  */
 class EpubViewerState internal constructor(
     currentPage: Int,
     pendingJumpPage: Int,
-    totalPages: Int
+    totalPages: Int,
+    zoomLevel: Int
 ) {
 
     private var _currentPage: MutableState<Int> = mutableIntStateOf(currentPage)
@@ -42,6 +44,13 @@ class EpubViewerState internal constructor(
      */
     val totalPages: Int get() = _totalPages.value
 
+    private var _zoomLevel: MutableState<Int> = mutableIntStateOf(zoomLevel)
+
+    /**
+     * The total number of pages in the EPUB.
+     */
+    val zoomLevel: Int get() = _zoomLevel.value
+
     /**
      * Jumps to the specified page.
      *
@@ -49,6 +58,17 @@ class EpubViewerState internal constructor(
      */
     fun jumpTo(pageIndex: Int) {
         _pendingJumpPage.value = pageIndex
+    }
+
+    /**
+     * Sets the zoom level.
+     *
+     * @param zoomLevel The zoom level to set.
+     */
+    fun setZoomLevel(zoomLevel: Int) {
+        if (zoomLevel in minimumZoomLevel..maxZoomLevel) {
+            _zoomLevel.value = zoomLevel
+        }
     }
 
     /**
@@ -77,13 +97,27 @@ class EpubViewerState internal constructor(
     }
 
     companion object {
+        /**
+         * The default zoom level.
+         */
+        const val defaultZoomLevel = 1
+
+        /**
+         * The minimum zoom level.
+         */
+        const val minimumZoomLevel = 1
+
+        /**
+         * The maximum zoom level.
+         */
+        const val maxZoomLevel = 4
 
         /**
          * Saver for the [EpubViewerState] class.
          */
-        fun Saver(): Saver<EpubViewerState, Triple<Int, Int, Int>> = Saver(
-            save = { Triple(it.currentPageIndex, it.pendingJumpPageIndex, it.totalPages) },
-            restore = { EpubViewerState(it.first, it.second, it.third) }
+        fun Saver(): Saver<EpubViewerState, List<Int>> = Saver(
+            save = { listOf(it.currentPageIndex, it.pendingJumpPageIndex, it.totalPages, it.zoomLevel) },
+            restore = { EpubViewerState(it[0], it[1], it[2], it[3]) }
         )
     }
 }
@@ -99,9 +133,9 @@ class EpubViewerState internal constructor(
 fun rememberEpubViewerState(
     currentPage: Int = 0,
     pendingJumpPage: Int = -1,
-    saver: Saver<EpubViewerState, Triple<Int, Int, Int>> = EpubViewerState.Saver()
+    saver: Saver<EpubViewerState, List<Int>> = EpubViewerState.Saver()
 ): EpubViewerState {
     return rememberSaveable(saver = saver) {
-        EpubViewerState(currentPage, pendingJumpPage, 0)
+        EpubViewerState(currentPage, pendingJumpPage, 0, EpubViewerState.defaultZoomLevel)
     }
 }

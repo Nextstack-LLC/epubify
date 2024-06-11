@@ -49,24 +49,20 @@ private fun Content() {
         bottomBar = {
             Column {
                 Button(
-                    enabled = state.currentPageIndex > 0,
                     onClick = {
-                        state.jumpTo(
-                            state.currentPageIndex - 1
-                        )
+                        val zoomLevel = state.zoomLevel - 1
+                        state.setZoomLevel(zoomLevel)
                     }
                 ) {
-                    Text(text = "Previous")
+                    Text(text = "- Zoom Level")
                 }
                 Button(
-                    enabled = state.currentPageIndex < state.totalPages - 1,
                     onClick = {
-                        state.jumpTo(
-                            state.currentPageIndex + 1
-                        )
+                        val zoomLevel = state.zoomLevel + 1
+                        state.setZoomLevel(zoomLevel)
                     }
                 ) {
-                    Text(text = "Next")
+                    Text(text = "+ Zoom Level")
                 }
                 Box(
                     modifier = Modifier.padding(16.dp)

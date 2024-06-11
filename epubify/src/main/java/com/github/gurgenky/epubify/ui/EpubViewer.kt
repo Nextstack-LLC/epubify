@@ -265,6 +265,10 @@ private fun ViewerContent(
         mutableIntStateOf(0)
     }
 
+    var zoomLevelChanged by remember {
+        mutableStateOf(false)
+    }
+
     val transparencyModifier = if (isLoaded && !isError) {
         Modifier.alpha(1f)
     } else {
@@ -378,14 +382,21 @@ private fun ViewerContent(
         }
     }
 
+    LaunchedEffect(state.zoomLevel) {
+        epubViewer.setZoomLevel(state.zoomLevel)
+        zoomLevelChanged = true
+    }
+
     LaunchedEffect(state.totalPages) {
         if (totalPages != 0 && state.totalPages != totalPages) {
             val currentProgress = latestPage / totalPages.toFloat()
             val page = (currentProgress * state.totalPages).roundToInt()
-            epubViewer.loadPage(page)
+            if (!zoomLevelChanged)
+                epubViewer.loadPage(page)
         }
         if (state.totalPages != 0) {
             totalPages = state.totalPages
+            zoomLevelChanged = false
         }
     }
 
