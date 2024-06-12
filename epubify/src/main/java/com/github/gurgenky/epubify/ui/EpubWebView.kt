@@ -4,6 +4,7 @@ import android.animation.ObjectAnimator
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
+import android.graphics.Bitmap
 import android.net.Uri
 import android.util.AttributeSet
 import android.view.GestureDetector
@@ -13,6 +14,11 @@ import android.webkit.WebResourceError
 import android.webkit.WebResourceRequest
 import android.webkit.WebView
 import android.webkit.WebViewClient
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.calculateEndPadding
+import androidx.compose.foundation.layout.calculateStartPadding
+import androidx.compose.ui.unit.LayoutDirection
+import androidx.compose.ui.unit.dp
 import com.github.gurgenky.epubify.R
 import com.github.gurgenky.epubify.parser.EpubWhitelist.ANCHOR_SCROLL_SCHEME
 import com.github.gurgenky.epubify.utils.ViewerGestureListener
@@ -78,6 +84,11 @@ internal class EpubWebView @JvmOverloads constructor(
      * A flag to check if the epub file is loaded.
      */
     private var loaded = false
+
+    /**
+     * An internal padding for the WebView.
+     */
+    private var internalPadding: PaddingValues = PaddingValues(0.dp)
 
     /**
      * A gesture detector for swipe gestures.
@@ -148,6 +159,13 @@ internal class EpubWebView @JvmOverloads constructor(
     }
 
     /**
+     * Sets the internal padding for the WebView.
+     */
+    internal fun setInternalPadding(internalPadding: PaddingValues) {
+        this.internalPadding = internalPadding
+    }
+
+    /**
      * Initializes the touch listeners for the WebView.
      */
     @SuppressLint("ClickableViewAccessibility")
@@ -183,6 +201,14 @@ internal class EpubWebView @JvmOverloads constructor(
             val chooser = Intent.createChooser(requestIntent, title)
             context.startActivity(chooser)
             return true
+        }
+
+        /**
+         * onPageStarted callback for the WebView that is called when the page starts loading.
+         */
+        override fun onPageStarted(view: WebView, url: String?, favicon: Bitmap?) {
+            super.onPageStarted(view, url, favicon)
+            view.loadUrl("javascript:window.WebViewBridge.processPreInitScript();")
         }
 
         /**
@@ -237,6 +263,22 @@ internal class EpubWebView @JvmOverloads constructor(
         }
 
         /**
+         * Processes the pre-init script in the WebView.
+         */
+        @JavascriptInterface
+        @Suppress("unused")
+        fun processPreInitScript() {
+            val preInitScript = context.resources.readRawResource(R.raw.pre_init_script)
+
+            postDelayed({
+                evaluateJavascript(preInitScript) {
+                    // Set internal padding
+                    setInternalPadding(internalPadding)
+                }
+            },100)
+        }
+
+        /**
          * Loads the specified page number in the WebView.
          * Calls scrollToPage in the WebView and changes the current page number.
          * @param page The page number.
@@ -287,26 +329,45 @@ internal class EpubWebView @JvmOverloads constructor(
         }
 
         /**
-         * Initializes the chapter columns in the WebView.
-         */
-        private fun initChapterColumns() {
-            val chapterPaddingScript = context.resources.readRawResource(R.raw.chapter_column_script)
-
-            postDelayed({
-                evaluateJavascript(chapterPaddingScript) {
-                    // Set initial zoom
-                    bridge.setZoom(currentZoomLevel)
-                }
-            },1000)
-        }
-
-        /**
          * Sets the zoom level for the WebView.
          */
         fun setZoom(zoom: Int) {
             post {
                 evaluateJavascript("setZoom($zoom);", null)
             }
+        }
+
+        /**
+         * Sets the internal padding for the WebView.
+         */
+        private fun setInternalPadding(internalPadding: PaddingValues) {
+            val layoutDirection = LayoutDirection.Ltr
+
+            val top = internalPadding.calculateTopPadding().value
+            val bottom = internalPadding.calculateBottomPadding().value
+            val left =  internalPadding.calculateStartPadding(layoutDirection).value
+            val right = internalPadding.calculateEndPadding(layoutDirection).value
+
+            post {
+                evaluateJavascript(
+                    "setBodyPadding(${top},${bottom},${left},${right});",
+                    null
+                )
+            }
+        }
+
+        /**
+         * Initializes the chapter columns in the WebView.
+         */
+        private fun initChapterColumns() {
+            val chapterColumnScript = context.resources.readRawResource(R.raw.chapter_column_script)
+
+            postDelayed({
+                evaluateJavascript(chapterColumnScript) {
+                    // Set initial zoom
+                    bridge.setZoom(currentZoomLevel)
+                }
+            },100)
         }
     }
 }

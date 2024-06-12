@@ -29,8 +29,6 @@ function initColumns() {
     body.style.webkitColumnWidth = columnWidth + 'px';
     body.style.webkitColumnHeight = windowHeight + 'px';
     body.style.webkitColumnGap = columnGap + 'px';
-    body.style.padding = '0px';
-    body.style.margin = '0px';
 }
 
 // Scroll to the element with the given id

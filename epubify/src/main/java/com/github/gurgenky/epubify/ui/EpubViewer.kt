@@ -6,6 +6,7 @@ import androidx.annotation.RequiresApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -24,8 +25,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.zIndex
 import com.github.gurgenky.epubify.model.Book
@@ -60,6 +63,7 @@ fun EpubViewer(
     modifier: Modifier = Modifier,
     state: EpubViewerState = rememberEpubViewerState(),
     parseOptions: ParseOptions = ParseOptions(),
+    innerPaddingValues: PaddingValues = PaddingValues(0.dp),
     loading: @Composable BoxScope.() -> Unit = {},
     error: @Composable BoxScope.() -> Unit = {},
     onInitialized: ((Int) -> Unit)? = null,
@@ -68,8 +72,9 @@ fun EpubViewer(
 ) {
     val coroutineScope = rememberCoroutineScope()
     val path by rememberUpdatedState(newValue = epubPath)
-    var book by rememberSaveable(saver = Book.Saver()) {
-        mutableStateOf(null)
+
+    var book by remember {
+        mutableStateOf<Book?>(null)
     }
 
     var parseError by remember {
@@ -80,6 +85,7 @@ fun EpubViewer(
         book = book,
         state = state,
         modifier = modifier,
+        innerPaddingValues = innerPaddingValues,
         loading = loading,
         error = error,
         onInitialized = onInitialized,
@@ -119,6 +125,7 @@ fun EpubViewer(
     modifier: Modifier = Modifier,
     state: EpubViewerState = rememberEpubViewerState(),
     parseOptions: ParseOptions = ParseOptions(),
+    innerPaddingValues: PaddingValues = PaddingValues(0.dp),
     loading: @Composable BoxScope.() -> Unit = {},
     error: @Composable BoxScope.() -> Unit = {},
     onInitialized: ((Int) -> Unit)? = null,
@@ -127,8 +134,9 @@ fun EpubViewer(
 ) {
     val coroutineScope = rememberCoroutineScope()
     val file by rememberUpdatedState(newValue = epub)
-    var book by rememberSaveable(saver = Book.Saver()) {
-        mutableStateOf(null)
+
+    var book by remember {
+        mutableStateOf<Book?>(null)
     }
 
     var parseError by remember {
@@ -139,6 +147,7 @@ fun EpubViewer(
         book = book,
         state = state,
         modifier = modifier,
+        innerPaddingValues = innerPaddingValues,
         loading = loading,
         error = error,
         onInitialized = onInitialized,
@@ -182,6 +191,7 @@ fun EpubViewer(
     modifier: Modifier = Modifier,
     state: EpubViewerState = rememberEpubViewerState(),
     parseOptions: ParseOptions = ParseOptions(),
+    innerPaddingValues: PaddingValues = PaddingValues(0.dp),
     loading: @Composable BoxScope.() -> Unit = {},
     error: @Composable BoxScope.() -> Unit = {},
     onInitialized: ((Int) -> Unit)? = null,
@@ -190,8 +200,9 @@ fun EpubViewer(
 ) {
     val coroutineScope = rememberCoroutineScope()
     val stream by rememberUpdatedState(newValue = epubInputStream)
-    var book by rememberSaveable(saver = Book.Saver()) {
-        mutableStateOf(null)
+
+    var book by remember {
+        mutableStateOf<Book?>(null)
     }
 
     var parseError by remember {
@@ -202,6 +213,7 @@ fun EpubViewer(
         book = book,
         state = state,
         modifier = modifier,
+        innerPaddingValues = innerPaddingValues,
         loading = loading,
         error = error,
         onInitialized = onInitialized,
@@ -231,6 +243,7 @@ private fun ViewerContent(
     book: Book?,
     state: EpubViewerState,
     modifier: Modifier = Modifier,
+    innerPaddingValues: PaddingValues,
     loading: @Composable() (BoxScope.() -> Unit),
     error: @Composable() (BoxScope.() -> Unit),
     onInitialized: ((Int) -> Unit)?,
@@ -245,7 +258,7 @@ private fun ViewerContent(
         EpubWebView(context)
     }
 
-    var htmlContent by rememberSaveable(key = book?.title) {
+    var htmlContent by remember {
         mutableStateOf("")
     }
 
@@ -317,6 +330,7 @@ private fun ViewerContent(
                             isError = true
                         }
 
+                        setInternalPadding(innerPaddingValues)
                         // Set layout params
                         isScrollContainer = false
                         layoutParams = ViewGroup.LayoutParams(

@@ -1,9 +1,6 @@
 package com.github.gurgenky.epubify.model
 
 import android.os.Parcelable
-import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.saveable.Saver
 import com.github.gurgenky.epubify.model.style.Style
 import kotlinx.parcelize.Parcelize
 
@@ -26,34 +23,4 @@ internal data class Book(
     val chapters: List<Chapter>,
     val images: List<Image>,
     val styles: List<Style>
-) : Parcelable {
-
-    companion object {
-
-        fun Saver() : Saver<MutableState<Book?>, List<Any?>> = Saver(
-            save = {
-                val book = it.value
-                listOf(
-                    book?.title,
-                    book?.author,
-                    book?.cover,
-                    book?.chapters,
-                    book?.images,
-                    book?.styles
-                )
-            },
-            restore = {
-                mutableStateOf(
-                    Book(
-                        it[0] as String,
-                        it[1] as String,
-                        it[2] as Image?,
-                        it[3] as List<Chapter>,
-                        it[4] as List<Image>,
-                        it[5] as List<Style>
-                    )
-                )
-            }
-        )
-    }
-}
+) : Parcelable
