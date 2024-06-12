@@ -18,7 +18,7 @@ internal object EpubWhitelist : Safelist() {
         addTags(
             "a", "b", "blockquote", "br", "caption", "cite", "code", "col",
             "colgroup", "dd", "div", "dl", "dt", "em", "h1", "h2", "h3", "h4", "h5", "h6",
-            "i", "img", "li", "ol", "p", "pre", "q", "section", "small", "strike", "strong",
+            "i", "img", "li", "ol", "nav", "p", "pre", "q", "section", "small", "strike", "strong",
             "sub", "sup", "table", "tbody", "td", "tfoot", "th", "thead", "tr", "u",
             "ul"
         )
