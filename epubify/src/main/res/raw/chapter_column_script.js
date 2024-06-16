@@ -1,77 +1,54 @@
-var columnWidth;
-var columnGap = 0;
-var pageCount;
-var currentPage = 0;
+const columnWidth = window.innerWidth;
+let pageCount = 0;
+let currentPage = 0;
+const columnGap = 10; // Adjust this value to set the desired gap between columns
 
 function initColumns() {
-    // Get the body element
-    var body = document.getElementsByTagName('body')[0];
+  const body = document.body;
+  const windowHeight = window.innerHeight;
 
-    // Get the height and width of the window (WebView)
-    var windowHeight = window.innerHeight;
-    var windowWidth = window.innerWidth;
+  const contentHeight = body.offsetHeight;
+  pageCount = Math.floor(contentHeight / windowHeight) + 1;
 
-    // Get the full height of the body content
-    var contentHeight = body.offsetHeight;
+  const newBodyWidth = (pageCount * columnWidth) + ((pageCount - 1) * columnGap);
 
-    // Calculate the initial number of pages based on the content height and window height
-    var pageCount = Math.floor(contentHeight / windowHeight) + 1;
+  body.style.height = `${windowHeight}px`;
+  body.style.width = `${newBodyWidth}px`;
 
-    // Calculate the new width of the body to accommodate all pages side by side
-    var newBodyWidth = pageCount * windowWidth;
-
-    // Set the height and width of the body
-    body.style.height = windowHeight + 'px';
-    body.style.width = newBodyWidth + 'px';
-
-    // Set the number of columns to match the number of pages
-    columnWidth = windowWidth - 0;
-    body.style.webkitColumnWidth = columnWidth + 'px';
-    body.style.webkitColumnHeight = windowHeight + 'px';
-    body.style.webkitColumnGap = columnGap + 'px';
+  body.style.columnWidth = `${columnWidth}px`;
+  body.style.columnHeight = `${windowHeight}px`;
+  body.style.columnGap = `${columnGap}px`;
 }
 
-// Scroll to the element with the given id
 function scrollToElement(elementId) {
-    var element = document.getElementById(elementId);
-    var offset = element.offsetLeft;
-    var page = Math.floor(offset / columnWidth);
+  const element = document.getElementById(elementId);
+  const offset = element.offsetLeft;
+  const page = Math.floor(offset / (columnWidth + columnGap));
 
-    window.WebViewBridge.setCurrentPage(page);
-    scrollToPage(page);
+  window.WebViewBridge.setCurrentPage(page);
+  scrollToPage(page);
 }
 
-// Call only after initialization
 function calculateColumnCount() {
-    // Select the span element
-    const spanElement = document.getElementById('end-marker');
+  const spanElement = document.getElementById('end-marker');
+  const leftPosition = spanElement.getBoundingClientRect().left;
+  const adjustedColumnWidth = columnWidth + columnGap;
+  const columnIndex = Math.ceil(leftPosition / adjustedColumnWidth);
+  pageCount = columnIndex + 1;
 
-    // Get the left property of the span element
-    const leftPosition = spanElement.getBoundingClientRect().left;
-
-    // Calculate the adjusted column width (column width + column gap)
-    const adjustedColumnWidth = columnWidth + columnGap;
-
-    // Determine the column index by dividing the left position by the adjusted column width
-    const columnIndex = Math.ceil(leftPosition / adjustedColumnWidth);
-
-    // Real page count
-    pageCount = columnIndex + 1
-
-    window.WebViewBridge.setColumnCount(pageCount + currentPage)
+  window.WebViewBridge.setColumnCount(pageCount + currentPage);
 }
 
-// Scroll to the given page
-function scrollToPage(page) {
-    var position = page * (columnWidth);
-    currentPage = page
-    window.WebViewBridge.animateScrollToPosition(window.devicePixelRatio, position);
+function scrollToPage(page, animated = true) {
+  const position = page * (columnWidth + columnGap) - columnGap / 2;
+
+  currentPage = page;
+  window.WebViewBridge.scrollToPosition(window.devicePixelRatio, position, animated);
 }
 
 function setZoom(multiplier) {
-    var body = document.getElementsByTagName('body')[0];
-    body.style.fontSize = 100 + (12.5 * multiplier) + "%"
-    calculateColumnCount()
+  document.body.style.fontSize = `${100 + (12.5 * multiplier)}%`;
+  calculateColumnCount();
 }
 
 initColumns();

@@ -397,16 +397,16 @@ private fun ViewerContent(
     }
 
     LaunchedEffect(state.zoomLevel) {
-        epubViewer.setZoomLevel(state.zoomLevel)
         zoomLevelChanged = true
+        latestPage = state.currentPageIndex
+        epubViewer.setZoomLevel(state.zoomLevel)
     }
 
     LaunchedEffect(state.totalPages) {
         if (totalPages != 0 && state.totalPages != totalPages) {
             val currentProgress = latestPage / totalPages.toFloat()
             val page = (currentProgress * state.totalPages).roundToInt()
-            if (!zoomLevelChanged)
-                epubViewer.loadPage(page)
+            epubViewer.loadPage(page, !zoomLevelChanged)
         }
         if (state.totalPages != 0) {
             totalPages = state.totalPages

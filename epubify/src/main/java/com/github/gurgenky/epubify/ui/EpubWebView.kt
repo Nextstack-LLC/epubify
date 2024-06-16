@@ -143,9 +143,11 @@ internal class EpubWebView @JvmOverloads constructor(
 
     /**
      * Loads the specified epub page in the WebView.
+     * @param page The page number.
+     * @param animated Whether to animate the scrolling.
      */
-    internal fun loadPage(page: Int) {
-        bridge.loadPage(page)
+    internal fun loadPage(page: Int, animated: Boolean = true) {
+        bridge.loadPage(page, animated)
     }
 
     /**
@@ -189,7 +191,6 @@ internal class EpubWebView @JvmOverloads constructor(
         ): Boolean {
             if (request.url.scheme == ANCHOR_SCROLL_SCHEME) {
                 val id = request.url.host
-                println(id)
                 evaluateJavascript("scrollToElement('${id}');", null)
                 return true
             }
@@ -282,10 +283,11 @@ internal class EpubWebView @JvmOverloads constructor(
          * Loads the specified page number in the WebView.
          * Calls scrollToPage in the WebView and changes the current page number.
          * @param page The page number.
+         * @param animated Whether to animate the scrolling.
          */
-        fun loadPage(page: Int) {
+        fun loadPage(page: Int, animated: Boolean) {
             post {
-                evaluateJavascript("scrollToPage(${page});", null)
+                evaluateJavascript("scrollToPage(${page}, ${animated});", null)
                 setCurrentPage(page)
             }
         }
@@ -307,11 +309,16 @@ internal class EpubWebView @JvmOverloads constructor(
          */
         @JavascriptInterface
         @Suppress("unused")
-        fun animateScrollToPosition(pixelRatio: Double, position: Int) {
+        fun scrollToPosition(pixelRatio: Double, position: Int, animated: Boolean) {
             post {
-                val positionInPixels = (position * pixelRatio).roundToInt()
-                val anim = ObjectAnimator.ofInt(this@EpubWebView, "scrollX", scrollX, positionInPixels)
-                anim.setDuration(500).start()
+                if (animated) {
+                    val positionInPixels = (position * pixelRatio).roundToInt()
+                    val anim = ObjectAnimator.ofInt(this@EpubWebView, "scrollX", scrollX, positionInPixels)
+                    anim.setDuration(500).start()
+                } else {
+                    val positionInPixels = (position * pixelRatio).roundToInt()
+                    scrollTo(positionInPixels, scrollY)
+                }
             }
         }
 

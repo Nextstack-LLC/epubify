@@ -80,6 +80,13 @@ internal class ViewerGestureListener(
     }
 
     /**
+     * Empty implementation to override the default behavior.
+     */
+    override fun onLongPress(e: MotionEvent) {
+        // do nothing
+    }
+
+    /**
      * Constants for swipe detection.
      */
     companion object {
