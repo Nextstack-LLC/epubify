@@ -1,5 +1,5 @@
 function setVerticalPadding(topDp, bottomDp) {
-    var body = document.getElementById('epub-content');
+    var body = document.getElementsByTagName('body')[0];
     body.style.paddingTop = (window.devicePixelRatio * topDp) + 'px';
     body.style.paddingBottom = (window.devicePixelRatio * bottomDp) + 'px';
 }
