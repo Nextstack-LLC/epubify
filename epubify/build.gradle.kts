@@ -13,7 +13,7 @@ val mavenProperties = Properties()
 mavenProperties.load(FileInputStream(mavenPropertiesFile))
 
 android {
-    namespace = "com.github.gurgenky.epubify"
+    namespace = "org.nextstack.epubify"
     compileSdk = 34
 
     publishing {

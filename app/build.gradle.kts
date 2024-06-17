@@ -4,11 +4,11 @@ plugins {
 }
 
 android {
-    namespace = "com.github.gurgenky.epubifydemo"
+    namespace = "org.nextstack.epubifydemo"
     compileSdk = 34
 
     defaultConfig {
-        applicationId = "com.github.gurgenky.epubifydemo"
+        applicationId = "org.nextstack.epubifydemo"
         minSdk = 24
         targetSdk = 34
         versionCode = 1
