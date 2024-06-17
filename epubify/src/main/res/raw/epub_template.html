@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+        <title>%s</title>
+        <style>
+            * {
+                scroll-behavior: smooth;
+                -webkit-user-select: none;
+                touch-action: none;
+            }
+            h1, h2, h3, h4, h5, h6, li, a, p {
+               padding-right: 10px !important;
+            }
+            body {
+                box-sizing: border-box;
+            }
+            img {
+                max-width: calc(100%%);
+            }
+            pre {
+                margin-left: 8px;
+                margin-right: 8px;
+                line-height: 1;
+                resize: both;
+                overflow: auto;
+                white-space: pre-wrap;
+            }
+        </style>
+        <style>
+            %s
+        </style>
+    </head>
+    <body>
+        %s
+        <span id="end-marker"></span>
+    </body>
+</html>
