@@ -30,7 +30,7 @@ class ParserTest {
         // Chapters include the cover pages as well
         assertEquals(10, epub.chapters.size)
 
-        assertEquals("1. Introduction", epub.chapters[3].title)
+        assertEquals("Accessible EPUB 3", epub.chapters[3].title)
     }
 
     @Test
