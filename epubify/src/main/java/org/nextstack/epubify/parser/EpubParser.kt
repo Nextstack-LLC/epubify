@@ -43,7 +43,7 @@ internal object EpubParser {
      * @return The parsed book.
      */
     @RequiresApi(Build.VERSION_CODES.O)
-    suspend fun parse(inputStream: InputStream, options: ParseOptions): org.nextstack.epubify.model.Book {
+    suspend fun parse(inputStream: InputStream, options: ParseOptions): Book {
         val tempFile = inputStream.toTempFile()
         return parse(tempFile, options)
     }
@@ -54,7 +54,7 @@ internal object EpubParser {
      * @param options Options for parsing the book.
      * @return The parsed book.
      */
-    suspend fun parse(filePath: String, options: ParseOptions): org.nextstack.epubify.model.Book {
+    suspend fun parse(filePath: String, options: ParseOptions): Book {
         return parse(File(filePath), options)
     }
 
@@ -64,7 +64,7 @@ internal object EpubParser {
      * @param options Options for parsing the book.
      * @return The parsed book.
      */
-    suspend fun parse(file: File, options: ParseOptions): org.nextstack.epubify.model.Book {
+    suspend fun parse(file: File, options: ParseOptions): Book {
         return parseAndCreateEbook(file, options)
     }
 
@@ -74,7 +74,7 @@ internal object EpubParser {
      * @param options Options for parsing the book.
      * @return The parsed book.
      */
-    private suspend fun parseAndCreateEbook(file: File, options: ParseOptions): org.nextstack.epubify.model.Book =
+    private suspend fun parseAndCreateEbook(file: File, options: ParseOptions): Book =
         withContext(Dispatchers.IO) {
             val extractionRoot = file.parentFile?.resolve("extract")
                 ?: throw FileNotFoundException("Failed to create temp directory or file not found")
@@ -292,7 +292,7 @@ internal object EpubParser {
 
         val styles = parseStyles(parent, configuration) + configuration.customStyles
 
-        return org.nextstack.epubify.model.Book(
+        return Book(
             title,
             author,
             cover,

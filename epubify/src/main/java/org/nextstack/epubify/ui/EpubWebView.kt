@@ -26,7 +26,7 @@ import org.nextstack.epubify.utils.readRawResource
 import kotlin.math.roundToInt
 
 /**
- * A WebView that displays an epub file.
+ * A [WebView] that displays an epub file.
  */
 @SuppressLint("SetJavaScriptEnabled")
 internal class EpubWebView @JvmOverloads constructor(

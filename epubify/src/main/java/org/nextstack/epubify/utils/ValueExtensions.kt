@@ -21,7 +21,7 @@ private val chapterTemplate = """
  *
  * @return The HTML representation of the book.
  */
-internal suspend fun org.nextstack.epubify.model.Book.asHtml(
+internal suspend fun Book.asHtml(
     context: Context
 ): String {
     val htmlTemplate = withContext(Dispatchers.IO) {
