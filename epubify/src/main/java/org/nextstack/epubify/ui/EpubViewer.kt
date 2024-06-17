@@ -3,7 +3,6 @@ package org.nextstack.epubify.ui
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.BoxScope
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -64,7 +63,7 @@ fun EpubViewer(
     modifier: Modifier = Modifier,
     state: EpubViewerState = rememberEpubViewerState(),
     parseOptions: ParseOptions = ParseOptions(),
-    innerPaddingValues: PaddingValues = PaddingValues(0.dp),
+    verticalInnerPadding: VerticalPaddingValues = VerticalPaddingValues(0.dp),
     loading: @Composable BoxScope.() -> Unit = {},
     error: @Composable BoxScope.() -> Unit = {},
     onInitialized: ((Int) -> Unit)? = null,
@@ -86,7 +85,7 @@ fun EpubViewer(
         book = book,
         state = state,
         modifier = modifier,
-        innerPaddingValues = innerPaddingValues,
+        verticalPaddingValues = verticalInnerPadding,
         loading = loading,
         error = error,
         onInitialized = onInitialized,
@@ -150,7 +149,7 @@ fun EpubViewer(
     modifier: Modifier = Modifier,
     state: EpubViewerState = rememberEpubViewerState(),
     parseOptions: ParseOptions = ParseOptions(),
-    innerPaddingValues: PaddingValues = PaddingValues(0.dp),
+    verticalInnerPadding: VerticalPaddingValues = VerticalPaddingValues(0.dp),
     loading: @Composable BoxScope.() -> Unit = {},
     error: @Composable BoxScope.() -> Unit = {},
     onInitialized: ((Int) -> Unit)? = null,
@@ -172,7 +171,7 @@ fun EpubViewer(
         book = book,
         state = state,
         modifier = modifier,
-        innerPaddingValues = innerPaddingValues,
+        verticalPaddingValues = verticalInnerPadding,
         loading = loading,
         error = error,
         onInitialized = onInitialized,
@@ -240,7 +239,7 @@ fun EpubViewer(
     modifier: Modifier = Modifier,
     state: EpubViewerState = rememberEpubViewerState(),
     parseOptions: ParseOptions = ParseOptions(),
-    innerPaddingValues: PaddingValues = PaddingValues(0.dp),
+    verticalInnerPadding: VerticalPaddingValues = VerticalPaddingValues(0.dp),
     loading: @Composable BoxScope.() -> Unit = {},
     error: @Composable BoxScope.() -> Unit = {},
     onInitialized: ((Int) -> Unit)? = null,
@@ -262,7 +261,7 @@ fun EpubViewer(
         book = book,
         state = state,
         modifier = modifier,
-        innerPaddingValues = innerPaddingValues,
+        verticalPaddingValues = verticalInnerPadding,
         loading = loading,
         error = error,
         onInitialized = onInitialized,

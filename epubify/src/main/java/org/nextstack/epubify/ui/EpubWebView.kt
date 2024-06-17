@@ -15,9 +15,6 @@ import android.webkit.WebResourceRequest
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.calculateEndPadding
-import androidx.compose.foundation.layout.calculateStartPadding
-import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import org.nextstack.epubify.R
 import org.nextstack.epubify.parser.EpubWhitelist.ANCHOR_SCROLL_SCHEME
@@ -161,10 +158,10 @@ internal class EpubWebView @JvmOverloads constructor(
     }
 
     /**
-     * Sets the internal padding for the WebView.
+     * Sets the internal vertical padding for the WebView.
      */
-    internal fun setInternalPadding(internalPadding: PaddingValues) {
-        this.internalPadding = internalPadding
+    internal fun setVerticalPadding(paddingValues: VerticalPaddingValues) {
+        this.internalPadding = paddingValues
     }
 
     /**
@@ -348,16 +345,12 @@ internal class EpubWebView @JvmOverloads constructor(
          * Sets the internal padding for the WebView.
          */
         private fun setInternalPadding(internalPadding: PaddingValues) {
-            val layoutDirection = LayoutDirection.Ltr
-
             val top = internalPadding.calculateTopPadding().value
             val bottom = internalPadding.calculateBottomPadding().value
-            val left =  internalPadding.calculateStartPadding(layoutDirection).value
-            val right = internalPadding.calculateEndPadding(layoutDirection).value
 
             post {
                 evaluateJavascript(
-                    "setBodyPadding(${top},${bottom},${left},${right});",
+                    "setVerticalPadding(${top},${bottom});",
                     null
                 )
             }
