@@ -96,6 +96,7 @@ class EpubViewerState internal constructor(
         _pendingJumpPage.value = -1
     }
 
+    @Suppress("ConstPropertyName")
     companion object {
         /**
          * The default zoom level.
