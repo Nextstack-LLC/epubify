@@ -10,6 +10,9 @@
                 -webkit-user-select: none;
                 touch-action: none;
             }
+            #epub-content {
+                padding-left: 10px !important;
+            }
             h1, h2, h3, h4, h5, h6, li, a, p {
                padding-right: 10px !important;
             }
@@ -33,7 +36,9 @@
         </style>
     </head>
     <body>
-        %s
+        <div id="epub-content">
+            %s
+        </div>
         <span id="end-marker"></span>
     </body>
 </html>

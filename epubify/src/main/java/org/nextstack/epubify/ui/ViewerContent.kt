@@ -4,7 +4,6 @@ import android.view.ViewGroup
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -45,7 +44,7 @@ internal fun ViewerContent(
     book: Book?,
     state: EpubViewerState,
     modifier: Modifier = Modifier,
-    innerPaddingValues: PaddingValues,
+    verticalPaddingValues: VerticalPaddingValues,
     loading: @Composable() (BoxScope.() -> Unit),
     error: @Composable() (BoxScope.() -> Unit),
     onInitialized: ((Int) -> Unit)?,
@@ -124,7 +123,7 @@ internal fun ViewerContent(
                             isError = true
                         }
 
-                        setInternalPadding(innerPaddingValues)
+                        setVerticalPadding(verticalPaddingValues)
                         // Set layout params
                         isScrollContainer = false
                         layoutParams = ViewGroup.LayoutParams(
