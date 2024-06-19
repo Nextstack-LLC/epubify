@@ -101,12 +101,12 @@ class EpubViewerState internal constructor(
         /**
          * The default zoom level.
          */
-        const val defaultZoomLevel = 1
+        const val defaultZoomLevel = 0
 
         /**
          * The minimum zoom level.
          */
-        const val minimumZoomLevel = 1
+        const val minimumZoomLevel = 0
 
         /**
          * The maximum zoom level.

@@ -84,7 +84,7 @@ afterEvaluate {
             create<MavenPublication>("release") {
                 groupId = "org.nextstack"
                 artifactId = "epubify"
-                version = "0.1.4"
+                version = "0.1.5"
                 from(components["release"])
             }
         }
