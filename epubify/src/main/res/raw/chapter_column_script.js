@@ -31,12 +31,14 @@ function scrollToElement(elementId) {
 
 function calculateColumnCount() {
   const spanElement = document.getElementById('end-marker');
-  const leftPosition = spanElement.getBoundingClientRect().left;
+  const scrollOffset = window.scrollX;
+  const leftPosition = scrollOffset + spanElement.getBoundingClientRect().left;
+
   const adjustedColumnWidth = columnWidth + columnGap;
   const columnIndex = Math.ceil(leftPosition / adjustedColumnWidth);
   pageCount = columnIndex + 1;
 
-  window.WebViewBridge.setColumnCount(pageCount + currentPage);
+  window.WebViewBridge.setColumnCount(pageCount);
 }
 
 function scrollToPage(page, animated = true) {
@@ -52,3 +54,4 @@ function setZoom(multiplier) {
 }
 
 initColumns();
+calculateColumnCount();

@@ -362,12 +362,9 @@ internal class EpubWebView @JvmOverloads constructor(
         private fun initChapterColumns() {
             val chapterColumnScript = context.resources.readRawResource(R.raw.chapter_column_script)
 
-            postDelayed({
-                evaluateJavascript(chapterColumnScript) {
-                    // Set initial zoom
-                    bridge.setZoom(currentZoomLevel)
-                }
-            },100)
+            post {
+                evaluateJavascript(chapterColumnScript, null)
+            }
         }
     }
 }
